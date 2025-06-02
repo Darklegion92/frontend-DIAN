@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
@@ -7,6 +8,7 @@ import Button from './Button';
 import Input from './Input';
 
 const CompanyList: React.FC = () => {
+  const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -269,7 +271,7 @@ const CompanyList: React.FC = () => {
             Administra y consulta la información de las empresas registradas (10 por página)
           </p>
         </div>
-        <Button variant="primary" size="md" className="w-full sm:w-auto">
+        <Button variant="primary" size="md" className="w-full sm:w-auto" onClick={() => navigate('/companies/create')}>
           <Plus className="h-5 w-5 mr-2" />
           Nueva Empresa
         </Button>

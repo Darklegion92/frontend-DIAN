@@ -88,6 +88,28 @@ class CompanyService {
       throw new Error('Error al obtener la empresa. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Crear una nueva company
+   */
+  async createCompany(companyData: any): Promise<Company> {
+    try {
+      const response = await apiClient.post('/companies', companyData);
+      
+      // La respuesta puede venir envuelta: { success, data: company }
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      // Si viene en formato directo
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al crear la empresa. Verifique su conexión a internet.');
+    }
+  }
 }
 
 // Exportar instancia única del servicio

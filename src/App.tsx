@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
 import CompanyList from './components/CompanyList';
+import CreateCompany from './components/CreateCompany';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Componente para rutas protegidas
@@ -81,6 +82,17 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <CompanyList />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/companies/create" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateCompany />
                 </Layout>
               </ProtectedRoute>
             } 
