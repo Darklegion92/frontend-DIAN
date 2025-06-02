@@ -1,13 +1,81 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Importar Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Estilos base personalizados */
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-white text-gray-900 font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Componentes personalizados */
+@layer components {
+  .btn-primary {
+    @apply bg-soltec-primary hover:bg-soltec-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-soltec hover:shadow-soltec-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-white border-2 border-soltec-primary text-soltec-primary hover:bg-soltec-50 font-semibold py-3 px-6 rounded-xl transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-soltec-primary/20 focus:border-soltec-primary transition-all duration-200 bg-white/90 backdrop-blur-sm;
+  }
+  
+  .card {
+    @apply bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg;
+  }
+  
+  .gradient-bg {
+    @apply bg-gradient-to-br from-soltec-primary via-soltec-secondary to-soltec-accent;
+  }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-soltec-primary to-soltec-accent bg-clip-text text-transparent;
+  }
+}
+
+/* Utilidades personalizadas */
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+/* Variables CSS personalizadas */
+:root {
+  --soltec-primary: #f67615;
+  --soltec-secondary: #fcb971;
+  --soltec-accent: #e75c0b;
+  --soltec-light: #feecd4;
+  --soltec-dark: #7b3012;
 }

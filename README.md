@@ -1,46 +1,141 @@
-# Getting Started with Create React App
+# APIDIAN Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend moderno para el sistema APIDIAN de SolTec, desarrollado con React, TypeScript y TailwindCSS.
 
-## Available Scripts
+## 🚀 Características
 
-In the project directory, you can run:
+- **React 19** con TypeScript para un desarrollo robusto
+- **TailwindCSS** para estilos modernos y responsive
+- **React Hook Form** con validación Zod
+- **Axios** para comunicación con la API
+- **React Router** para navegación
+- **Lucide React** para iconos
+- **Autenticación JWT** integrada
+- **Diseño responsive** y moderno
+- **Tema personalizado** con colores corporativos de SolTec
 
-### `npm start`
+## 🎨 Diseño
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+El frontend utiliza una paleta de colores inspirada en la identidad corporativa de SolTec:
+- **Primario**: Naranja (#f67615)
+- **Secundario**: Amarillo dorado (#fcb971)
+- **Acento**: Naranja oscuro (#e75c0b)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 📦 Instalación
 
-### `npm test`
+```bash
+# Instalar dependencias
+npm install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Iniciar servidor de desarrollo
+npm start
 
-### `npm run build`
+# Construir para producción
+npm run build
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Ejecutar tests
+npm test
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🔧 Configuración
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
 
-### `npm run eject`
+```env
+REACT_APP_API_URL=http://localhost:8000/api
+REACT_APP_ENV=development
+REACT_APP_NAME=APIDIAN Frontend
+REACT_APP_VERSION=1.0.0
+REACT_APP_DEBUG=true
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 🏗️ Estructura del Proyecto
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+src/
+├── components/          # Componentes React
+│   ├── Button.tsx      # Componente de botón reutilizable
+│   ├── Input.tsx       # Componente de input con validación
+│   ├── Logo.tsx        # Logo de SolTec
+│   ├── LoginPage.tsx   # Página de login
+│   ├── Dashboard.tsx   # Dashboard principal
+│   └── LoadingSpinner.tsx # Spinner de carga
+├── hooks/              # Hooks personalizados
+│   └── useAuth.tsx     # Hook de autenticación
+├── services/           # Servicios de API
+│   └── authService.ts  # Servicio de autenticación
+├── types/              # Tipos TypeScript
+├── utils/              # Utilidades
+└── assets/             # Recursos estáticos
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 🔐 Autenticación
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+El sistema utiliza autenticación JWT con las siguientes características:
+- Login con email y contraseña
+- Almacenamiento seguro del token
+- Verificación automática de sesión
+- Redirección automática según estado de autenticación
+- Logout con limpieza de datos
 
-## Learn More
+## 📱 Responsive Design
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+El frontend está optimizado para:
+- **Desktop**: Experiencia completa con todas las funcionalidades
+- **Tablet**: Adaptación de layout y navegación
+- **Mobile**: Interfaz optimizada para pantallas pequeñas
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🎯 Funcionalidades
+
+### Página de Login
+- Formulario con validación en tiempo real
+- Mensajes de error y éxito
+- Opción "Recordarme"
+- Recuperación de contraseña
+- Animaciones suaves
+
+### Dashboard
+- Resumen de actividad
+- Estadísticas en tiempo real
+- Accesos rápidos
+- Navegación intuitiva
+- Perfil de usuario
+
+## 🛠️ Tecnologías Utilizadas
+
+- **React 19** - Framework principal
+- **TypeScript** - Tipado estático
+- **TailwindCSS** - Framework de CSS
+- **React Hook Form** - Manejo de formularios
+- **Zod** - Validación de esquemas
+- **Axios** - Cliente HTTP
+- **React Router** - Enrutamiento
+- **Lucide React** - Iconos
+
+## 🚀 Despliegue
+
+Para desplegar en producción:
+
+```bash
+# Construir la aplicación
+npm run build
+
+# Los archivos estáticos estarán en la carpeta 'build'
+```
+
+## 📄 Licencia
+
+© 2025 SolTec - Tecnología y Desarrollo. Todos los derechos reservados.
+
+## 🤝 Contribución
+
+Para contribuir al proyecto:
+1. Fork el repositorio
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Abre un Pull Request
+
+## 📞 Soporte
+
+Para soporte técnico, contacta al equipo de desarrollo de SolTec.
