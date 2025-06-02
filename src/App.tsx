@@ -5,6 +5,7 @@ import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
 import CompanyList from './components/CompanyList';
 import CreateCompany from './components/CreateCompany';
+import ResolutionList from './components/ResolutionList';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Componente para rutas protegidas
@@ -104,6 +105,17 @@ const AppContent: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <CreateCompany />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/companies/:companyId/resolutions" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ResolutionList />
                 </Layout>
               </ProtectedRoute>
             } 

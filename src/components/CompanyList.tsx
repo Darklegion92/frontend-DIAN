@@ -150,7 +150,7 @@ const CompanyList: React.FC = () => {
         break;
       case 'ver-resoluciones':
         // Navegar a lista de resoluciones
-        console.log(`Ver resoluciones para empresa ${company.id}`);
+        navigate(`/companies/${company.id}/resolutions`);
         break;
       case 'ver-documentos':
         // Navegar a documentos de la empresa
