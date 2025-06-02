@@ -199,6 +199,33 @@ class CatalogService {
       throw new Error('Error al buscar municipios. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Obtener un municipio específico por ID
+   */
+  async getMunicipalityById(id: number): Promise<MunicipalityOption | null> {
+    try {
+      const response = await apiClient.get(`/catalogs/municipalities/${id}`);
+      
+      // Verificar si la respuesta viene envuelta
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      // Si viene en formato directo
+      return response.data;
+    } catch (error: any) {
+      // Si no se encuentra el municipio, retornar null
+      if (error.response?.status === 404) {
+        return null;
+      }
+      
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al obtener el municipio. Verifique su conexión a internet.');
+    }
+  }
 }
 
 // Exportar instancia única del servicio

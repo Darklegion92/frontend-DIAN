@@ -98,6 +98,17 @@ const AppContent: React.FC = () => {
             } 
           />
           
+          <Route 
+            path="/companies/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateCompany />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
           {/* Ruta por defecto - redirige al login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

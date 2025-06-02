@@ -119,19 +119,23 @@ const CompanyList: React.FC = () => {
     // Cerrar dropdown si está abierto
     setOpenDropdown(null);
     
-    // Placeholder para futuras implementaciones
+    // Implementar acciones específicas
     switch (action) {
       case 'ver-empresa':
-        // Navegar a vista detallada de empresa
+        // Navegar a vista detallada de empresa (edición)
+        navigate(`/companies/${company.id}`);
         break;
       case 'agregar-certificado':
         // Abrir modal/página para agregar certificado
+        console.log(`Agregar/actualizar certificado para empresa ${company.id}`);
         break;
       case 'ver-resoluciones':
         // Navegar a lista de resoluciones
+        console.log(`Ver resoluciones para empresa ${company.id}`);
         break;
       case 'ver-documentos':
         // Navegar a documentos de la empresa
+        console.log(`Ver documentos para empresa ${company.id}`);
         break;
       default:
         break;

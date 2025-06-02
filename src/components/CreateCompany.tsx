@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Building2, Save, ArrowLeft, AlertCircle } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
@@ -25,8 +25,12 @@ interface CreateCompanyForm {
 
 const CreateCompany: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const isEditing = !!id;
+  
   const [loading, setLoading] = useState(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
+  const [loadingCompany, setLoadingCompany] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateCompanyForm>({
     nit: '',
@@ -75,6 +79,42 @@ const CreateCompany: React.FC = () => {
     loadCatalogs();
   }, []);
 
+  // Cargar datos de la empresa si estamos editando
+  useEffect(() => {
+    const loadCompany = async () => {
+      if (!isEditing || !id) return;
+
+      try {
+        setLoadingCompany(true);
+        const company = await companyService.getCompanyById(Number(id));
+        
+        // Mapear los datos de la empresa al formato del formulario
+        const newFormData: CreateCompanyForm = {
+          nit: company.identificationNumber || '',
+          digito: company.dv || '',
+          type_document_identification_id: company.typeDocumentIdentificationId ? Number(company.typeDocumentIdentificationId) : '',
+          type_organization_id: company.typeOrganizationId ? Number(company.typeOrganizationId) : '',
+          type_regime_id: company.typeRegimeId ? Number(company.typeRegimeId) : '',
+          type_liability_id: company.typeLiabilityId ? Number(company.typeLiabilityId) : '',
+          business_name: '', // Campo no existe en Company, se mantiene vacío para edición manual
+          merchant_registration: company.merchantRegistration || '',
+          municipality_id: company.municipalityId ? Number(company.municipalityId) : '',
+          address: company.address || '',
+          phone: company.phone || '',
+          email: '', // Campo no existe en Company, se mantiene vacío para edición manual
+        };
+        
+        setFormData(newFormData);
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar los datos de la empresa');
+      } finally {
+        setLoadingCompany(false);
+      }
+    };
+
+    loadCompany();
+  }, [isEditing, id]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -114,18 +154,18 @@ const CreateCompany: React.FC = () => {
         throw new Error('Todos los campos son obligatorios');
       }
 
-      // Crear la empresa
+      // Usar el método correcto según el modo
       await companyService.createCompany(formData as any);
       
       // Redirigir a la lista con mensaje de éxito
       navigate('/companies', { 
         state: { 
-          message: 'Empresa creada exitosamente',
+          message: isEditing ? 'Empresa actualizada exitosamente' : 'Empresa creada exitosamente',
           type: 'success' 
         }
       });
     } catch (err: any) {
-      setError(err.message || 'Error al crear la empresa');
+      setError(err.message || `Error al ${isEditing ? 'actualizar' : 'crear'} la empresa`);
     } finally {
       setLoading(false);
     }
@@ -135,13 +175,15 @@ const CreateCompany: React.FC = () => {
     navigate('/companies');
   };
 
-  // Mostrar loading mientras se cargan los catálogos
-  if (loadingCatalogs) {
+  // Mostrar loading mientras se cargan los catálogos o la empresa
+  if (loadingCatalogs || loadingCompany) {
     return (
       <div className="flex items-center justify-center min-h-64">
         <div className="text-center">
           <LoadingSpinner size="xl" color="primary" />
-          <p className="mt-4 text-gray-600">Cargando formulario...</p>
+          <p className="mt-4 text-gray-600">
+            {loadingCatalogs ? 'Cargando formulario...' : 'Cargando datos de la empresa...'}
+          </p>
         </div>
       </div>
     );
@@ -164,10 +206,10 @@ const CreateCompany: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center space-x-2">
             <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-soltec-primary" />
-            <span>Crear Nueva Empresa</span>
+            <span>{isEditing ? 'Editar Empresa' : 'Crear Nueva Empresa'}</span>
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            Registra una nueva empresa en el sistema DIAN
+            {isEditing ? 'Modifica la información de la empresa' : 'Registra una nueva empresa en el sistema DIAN'}
           </p>
         </div>
       </div>
@@ -197,6 +239,7 @@ const CreateCompany: React.FC = () => {
                   placeholder="900123456"
                   helperText="Sin dígito de verificación"
                   required
+                  disabled={loading}
                   {...{ name: "nit", maxLength: 15, pattern: "[0-9]*" }}
                 />
               </div>
@@ -208,6 +251,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="7"
                   required
+                  disabled={loading}
                   {...{ name: "digito", maxLength: 1, pattern: "[0-9]" }}
                 />
               </div>
@@ -219,6 +263,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="EMPRESA EJEMPLO S.A.S."
                   required
+                  disabled={loading}
                   {...{ name: "business_name", maxLength: 255 }}
                 />
               </div>
@@ -239,6 +284,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
                   required
+                  disabled={loading}
                 >
                   <option value="">Seleccionar...</option>
                   {typeDocumentOptions.map((option) => (
@@ -259,6 +305,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
                   required
+                  disabled={loading}
                 >
                   <option value="">Seleccionar...</option>
                   {typeOrganizationOptions.map((option) => (
@@ -279,6 +326,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
                   required
+                  disabled={loading}
                 >
                   <option value="">Seleccionar...</option>
                   {typeRegimeOptions.map((option) => (
@@ -299,6 +347,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
                   required
+                  disabled={loading}
                 >
                   <option value="">Seleccionar...</option>
                   {typeLiabilityOptions.map((option) => (
@@ -321,6 +370,7 @@ const CreateCompany: React.FC = () => {
                   value={formData.municipality_id}
                   onChange={handleMunicipalityChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -331,6 +381,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="12345678"
                   required
+                  disabled={loading}
                   {...{ name: "merchant_registration", maxLength: 20 }}
                 />
               </div>
@@ -342,6 +393,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Carrera 15 #93-47, Oficina 501"
                   required
+                  disabled={loading}
                   {...{ name: "address", maxLength: 255 }}
                 />
               </div>
@@ -353,6 +405,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="+57 1 123 4567"
                   required
+                  disabled={loading}
                   {...{ name: "phone", maxLength: 20 }}
                 />
               </div>
@@ -365,6 +418,7 @@ const CreateCompany: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="contacto@empresa.com"
                   required
+                  disabled={loading}
                   {...{ name: "email", maxLength: 100 }}
                 />
               </div>
@@ -397,7 +451,7 @@ const CreateCompany: React.FC = () => {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Crear Empresa
+                  {isEditing ? 'Actualizar Empresa' : 'Crear Empresa'}
                 </>
               )}
             </Button>

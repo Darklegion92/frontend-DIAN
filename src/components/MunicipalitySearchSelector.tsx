@@ -39,9 +39,15 @@ const MunicipalitySearchSelector: React.FC<MunicipalitySearchSelectorProps> = ({
 
   // Encontrar municipio seleccionado cuando cambia el value
   useEffect(() => {
-    if (value && municipalities.length > 0) {
+    if (value && typeof value === 'number') {
+      // Primero buscar en la lista actual de municipios
       const selected = municipalities.find(m => m.id === value);
-      setSelectedMunicipality(selected || null);
+      if (selected) {
+        setSelectedMunicipality(selected);
+      } else {
+        // Si no está en la lista, cargar específicamente este municipio
+        loadMunicipalityById(value);
+      }
     } else {
       setSelectedMunicipality(null);
     }
@@ -95,6 +101,24 @@ const MunicipalitySearchSelector: React.FC<MunicipalitySearchSelectorProps> = ({
       setMunicipalities([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para cargar un municipio específico por ID
+  const loadMunicipalityById = async (id: number) => {
+    try {
+      const municipality = await catalogService.getMunicipalityById(id);
+      
+      if (municipality) {
+        setSelectedMunicipality(municipality);
+        // Agregar a la lista si no está ya presente
+        setMunicipalities(prev => {
+          const exists = prev.find(m => m.id === id);
+          return exists ? prev : [municipality, ...prev];
+        });
+      }
+    } catch (err) {
+      console.error('Error loading municipality by ID:', err);
     }
   };
 
