@@ -6,6 +6,7 @@ import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import Input from './Input';
+import CertificateUploadModal from './CertificateUploadModal';
 
 const CompanyList: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,19 @@ const CompanyList: React.FC = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  
+  // Estado del modal de certificados
+  const [certificateModal, setCertificateModal] = useState<{
+    isOpen: boolean;
+    companyId: number | null;
+    companyName: string;
+    bearerToken: string;
+  }>({
+    isOpen: false,
+    companyId: null,
+    companyName: '',
+    bearerToken: ''
+  });
 
   // Cargar empresas
   const loadCompanies = async (params?: PaginationQuery) => {
@@ -126,8 +140,13 @@ const CompanyList: React.FC = () => {
         navigate(`/companies/${company.id}`);
         break;
       case 'agregar-certificado':
-        // Abrir modal/página para agregar certificado
-        console.log(`Agregar/actualizar certificado para empresa ${company.id}`);
+        // Abrir modal para agregar/actualizar certificado
+        setCertificateModal({
+          isOpen: true,
+          companyId: company.id,
+          companyName: `${company.identificationNumber}-${company.dv}`,
+          bearerToken: company.tokenDian || ''
+        });
         break;
       case 'ver-resoluciones':
         // Navegar a lista de resoluciones
@@ -140,6 +159,22 @@ const CompanyList: React.FC = () => {
       default:
         break;
     }
+  };
+
+  // Manejar éxito del modal de certificados
+  const handleCertificateSuccess = () => {
+    // Recargar la lista de empresas para actualizar el estado del certificado
+    loadCompanies();
+  };
+
+  // Cerrar modal de certificados
+  const handleCertificateModalClose = () => {
+    setCertificateModal({
+      isOpen: false,
+      companyId: null,
+      companyName: '',
+      bearerToken: ''
+    });
   };
 
   // Formatear fecha
@@ -545,6 +580,16 @@ const CompanyList: React.FC = () => {
           </>
         )}
       </div>
+      
+      {/* Modal de Certificados */}
+      <CertificateUploadModal
+        isOpen={certificateModal.isOpen}
+        onClose={handleCertificateModalClose}
+        companyId={certificateModal.companyId || 0}
+        companyName={certificateModal.companyName}
+        onSuccess={handleCertificateSuccess}
+        bearerToken={certificateModal.bearerToken}
+      />
     </div>
   );
 };
