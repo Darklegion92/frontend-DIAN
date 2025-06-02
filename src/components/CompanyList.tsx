@@ -153,8 +153,8 @@ const CompanyList: React.FC = () => {
         navigate(`/companies/${company.id}/resolutions`);
         break;
       case 'ver-documentos':
-        // Navegar a documentos de la empresa
-        console.log(`Ver documentos para empresa ${company.id}`);
+        // Navegar a documentos de la empresa con filtro aplicado
+        navigate(`/documents?company=${company.identificationNumber}`);
         break;
       default:
         break;

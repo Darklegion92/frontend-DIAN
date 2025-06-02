@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, LogOut, Menu, X } from 'lucide-react';
+import { Building2, LogOut, Menu, X, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import Button from './Button';
@@ -55,6 +55,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
       path: '/companies',
       icon: Building2,
       description: 'Gestión de empresas'
+    },
+    {
+      name: 'Documentos',
+      path: '/documents',
+      icon: FileText,
+      description: 'Documentos electrónicos'
     }
   ];
 
