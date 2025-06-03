@@ -41,6 +41,19 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Interfaces para los datos de actualización de ambiente
+interface UpdateEnvironmentData {
+  type_environment_id?: number;
+  payroll_type_environment_id?: number;
+  eqdocs_type_environment_id?: number;
+  token: string;
+}
+
+interface UpdateEnvironmentResponse {
+  message: string;
+  company: Company;
+}
+
 class CompanyService {
   /**
    * Obtener lista de companies con paginación
@@ -108,6 +121,28 @@ class CompanyService {
         throw new Error(error.response.data.message);
       }
       throw new Error('Error al crear la empresa. Verifique su conexión a internet.');
+    }
+  }
+
+  /**
+   * Actualizar ambiente de una empresa (pasar a producción)
+   */
+  async updateEnvironment(updateData: UpdateEnvironmentData): Promise<UpdateEnvironmentResponse> {
+    try {
+      const response = await apiClient.put('/companies/environment', updateData);
+      
+      // La respuesta puede venir envuelta: { success, data: {...} }
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      
+      // Si viene en formato directo
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al actualizar el ambiente de la empresa. Verifique su conexión a internet.');
     }
   }
 }

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import Input from './Input';
 import CertificateUploadModal from './CertificateUploadModal';
+import ProductionModal from './ProductionModal';
 
 const CompanyList: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +36,15 @@ const CompanyList: React.FC = () => {
     companyId: null,
     companyName: '',
     bearerToken: ''
+  });
+
+  // Estado del modal de producción
+  const [productionModal, setProductionModal] = useState<{
+    isOpen: boolean;
+    company: Company | null;
+  }>({
+    isOpen: false,
+    company: null
   });
 
   // Cargar empresas
@@ -156,6 +166,13 @@ const CompanyList: React.FC = () => {
         // Navegar a documentos de la empresa con filtro aplicado
         navigate(`/documents?company=${company.identificationNumber}`);
         break;
+      case 'pasar-produccion':
+        // Abrir modal para pasar a producción
+        setProductionModal({
+          isOpen: true,
+          company: company
+        });
+        break;
       default:
         break;
     }
@@ -174,6 +191,24 @@ const CompanyList: React.FC = () => {
       companyId: null,
       companyName: '',
       bearerToken: ''
+    });
+  };
+
+  // Manejar éxito del modal de producción
+  const handleProductionSuccess = (updatedCompany: Company) => {
+    // Actualizar la empresa en la lista local
+    setCompanies(prevCompanies => 
+      prevCompanies.map(company => 
+        company.id === updatedCompany.id ? updatedCompany : company
+      )
+    );
+  };
+
+  // Cerrar modal de producción
+  const handleProductionModalClose = () => {
+    setProductionModal({
+      isOpen: false,
+      company: null
     });
   };
 
@@ -276,6 +311,18 @@ const CompanyList: React.FC = () => {
                 >
                   <FolderOpen className="h-4 w-4 mr-3 text-orange-500" />
                   Ver Documentos
+                </button>
+                
+                {/* Separador */}
+                <div className="border-t border-gray-100 my-1" />
+                
+                {/* Acción de pasar a producción */}
+                <button
+                  onClick={() => handleAction('pasar-produccion', company)}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                >
+                  <ArrowUpCircle className="h-4 w-4 mr-3 text-emerald-500" />
+                  Pasar a Producción
                 </button>
               </div>
             </div>
@@ -513,6 +560,16 @@ const CompanyList: React.FC = () => {
                             <FolderOpen className="h-3 w-3 mr-1" />
                             Docs.
                           </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAction('pasar-produccion', company)}
+                            className="text-xs px-2 py-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+                          >
+                            <ArrowUpCircle className="h-3 w-3 mr-1" />
+                            Prod.
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -589,6 +646,14 @@ const CompanyList: React.FC = () => {
         companyName={certificateModal.companyName}
         onSuccess={handleCertificateSuccess}
         bearerToken={certificateModal.bearerToken}
+      />
+      
+      {/* Modal de Producción */}
+      <ProductionModal
+        isOpen={productionModal.isOpen}
+        onClose={handleProductionModalClose}
+        company={productionModal.company}
+        onSuccess={handleProductionSuccess}
       />
     </div>
   );
