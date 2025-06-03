@@ -46,14 +46,68 @@ export interface LoginData {
   password: string;
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  DEALER = 'DEALER',
+  USER = 'USER',
+}
+
 export interface User {
-  id: number;
+  id: string;
+  username: string;
   name: string;
   email: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
   company?: {
     id: number;
     identification_number: string;
     name: string;
+  };
+}
+
+export interface CreateUserData {
+  username: string;
+  email: string;
+  name: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserData {
+  username?: string;
+  email?: string;
+  name?: string;
+  password?: string;
+  role?: UserRole;
+}
+
+export interface PaginationQuery {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: {
+    data: T[];
+    meta: {
+      currentPage: number;
+      itemsPerPage: number;
+      totalItems: number;
+      totalPages: number;
+      hasPreviousPage: boolean;
+      hasNextPage: boolean;
+    };
   };
 }
 
@@ -134,9 +188,78 @@ class AuthService {
           }
         }
       );
-      return response.data.success;
+      return response.data.data;
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Cambiar contraseña del usuario actual
+   */
+  async changePassword(passwordData: ChangePasswordData): Promise<void> {
+    try {
+      const response = await apiClient.put('/users/change-password', {
+        oldPassword: passwordData.currentPassword,
+        password: passwordData.newPassword
+      });
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Error al cambiar la contraseña');
+      }
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al cambiar la contraseña');
+    }
+  }
+
+  /**
+   * Obtener lista paginada de usuarios (Solo ADMIN)
+   */
+  async getUsers(params: PaginationQuery = {}): Promise<PaginatedResponse<User>> {
+    try {
+      const response = await apiClient.get('/users', { params });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al obtener usuarios');
+    }
+  }
+
+  /**
+   * Obtener usuario por ID (Solo ADMIN)
+   */
+  async getUserById(id: string): Promise<User> {
+    try {
+      const response = await apiClient.get(`/users/${id}`);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al obtener usuario');
+    }
+  }
+
+  /**
+   * Crear nuevo usuario (Solo ADMIN)
+   */
+  async createUser(userData: CreateUserData): Promise<User> {
+    try {
+      const response = await apiClient.post('/users', userData);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al crear usuario');
+    }
+  }
+
+  /**
+   * Actualizar usuario (Solo ADMIN)
+   */
+  async updateUser(id: string, userData: UpdateUserData): Promise<User> {
+    try {
+      const response = await apiClient.put(`/users/${id}`, userData);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al actualizar usuario');
     }
   }
 }

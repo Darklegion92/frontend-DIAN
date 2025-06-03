@@ -7,6 +7,9 @@ import CompanyList from './components/CompanyList';
 import CreateCompany from './components/CreateCompany';
 import ResolutionList from './components/ResolutionList';
 import DocumentList from './components/DocumentList';
+import UserManagement from './components/UserManagement';
+import UserProfile from './components/UserProfile';
+import AdminRoute from './components/AdminRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Componente para rutas protegidas
@@ -129,6 +132,32 @@ const AppContent: React.FC = () => {
                 <Layout>
                   <DocumentList />
                 </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Perfil de usuario (Todos los usuarios autenticados) */}
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UserProfile />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Rutas de administración (Solo ADMIN) */}
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <Layout>
+                    <UserManagement />
+                  </Layout>
+                </AdminRoute>
               </ProtectedRoute>
             } 
           />

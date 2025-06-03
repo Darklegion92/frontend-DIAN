@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, LogOut, Menu, X, FileText } from 'lucide-react';
+import { Building2, LogOut, Menu, X, FileText, Users, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { UserRole } from '../services/authService';
 import Logo from './Logo';
 import Button from './Button';
 
@@ -49,20 +50,43 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
     }
   };
 
-  const menuItems = [
-    {
-      name: 'Empresas',
-      path: '/companies',
-      icon: Building2,
-      description: 'Gestión de empresas'
-    },
-    {
-      name: 'Documentos',
-      path: '/documents',
-      icon: FileText,
-      description: 'Documentos electrónicos'
+  // Configurar elementos del menú basado en el rol del usuario
+  const getMenuItems = () => {
+    const baseItems = [
+      {
+        name: 'Empresas',
+        path: '/companies',
+        icon: Building2,
+        description: 'Gestión de empresas'
+      },
+      {
+        name: 'Documentos',
+        path: '/documents',
+        icon: FileText,
+        description: 'Documentos electrónicos'
+      },
+      {
+        name: 'Mi Perfil',
+        path: '/profile',
+        icon: UserCircle,
+        description: 'Información personal'
+      }
+    ];
+
+    // Solo mostrar gestión de usuarios para administradores
+    if (user?.role === UserRole.ADMIN) {
+      baseItems.splice(2, 0, {
+        name: 'Usuarios',
+        path: '/admin/users',
+        icon: Users,
+        description: 'Gestión de usuarios'
+      });
     }
-  ];
+
+    return baseItems;
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div className={`bg-white shadow-lg border-r border-gray-200 flex flex-col transition-all duration-300 ${
@@ -95,6 +119,16 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
           <div className="text-sm">
             <p className="font-medium text-gray-900 truncate">{user?.name}</p>
             <p className="text-gray-500 truncate">{user?.email}</p>
+            {user?.role && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                user.role === UserRole.ADMIN ? 'bg-red-100 text-red-800' :
+                user.role === UserRole.DEALER ? 'bg-yellow-100 text-yellow-800' :
+                'bg-green-100 text-green-800'
+              }`}>
+                {user.role === UserRole.ADMIN ? 'Administrador' :
+                 user.role === UserRole.DEALER ? 'Distribuidor' : 'Usuario'}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -121,7 +155,8 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || 
+                           (item.path === '/admin/users' && location.pathname.startsWith('/admin/users'));
             
             return (
               <li key={item.path}>
@@ -153,8 +188,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
         </ul>
       </nav>
 
-      {/* Botón de cerrar sesión */}
+      {/* Área inferior */}
       <div className="p-4 border-t border-gray-200">
+        {/* Botón de cerrar sesión */}
         {isCollapsed ? (
           <button
             onClick={handleLogout}
