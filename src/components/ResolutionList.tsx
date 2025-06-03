@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, ArrowLeft, Calendar, Hash, Key, Building2, Plus, Edit } from 'lucide-react';
 import { Resolution, PaginatedResolutionResponse } from '../types/resolution';
+import { Company } from '../types/company';
 import { resolutionService } from '../services/resolutionService';
+import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import ResolutionModal from './ResolutionModal';
@@ -11,6 +13,7 @@ const ResolutionList: React.FC = () => {
   const { companyId } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
   const [resolutions, setResolutions] = useState<Resolution[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
@@ -32,6 +35,19 @@ const ResolutionList: React.FC = () => {
     editingResolution: null,
     bearerToken: ''
   });
+
+  // Cargar datos de la empresa
+  const loadCompany = async () => {
+    if (!companyId) return;
+
+    try {
+      const companyData = await companyService.getCompanyById(Number(companyId));
+      setCompany(companyData);
+    } catch (err: any) {
+      console.error('Error al cargar empresa:', err);
+      setError(err.message || 'Error al cargar los datos de la empresa');
+    }
+  };
 
   // Cargar resoluciones
   const loadResolutions = async (page?: number) => {
@@ -70,9 +86,13 @@ const ResolutionList: React.FC = () => {
     }
   };
 
-  // Efecto para cargar resoluciones al montar el componente
+  // Efecto para cargar empresa y resoluciones al montar el componente
   useEffect(() => {
-    loadResolutions();
+    const loadData = async () => {
+      await loadCompany();
+      await loadResolutions();
+    };
+    loadData();
   }, [companyId]);
 
   // Manejar cambio de página
@@ -93,8 +113,13 @@ const ResolutionList: React.FC = () => {
 
   // Abrir modal para crear nueva resolución
   const handleCreateResolution = () => {
-    // Obtener el bearer token (aquí deberías obtenerlo del contexto de auth o localStorage)
-    const bearerToken = localStorage.getItem('auth_token') || '';
+    // Usar el token específico de la empresa
+    const bearerToken = company?.tokenDian || '';
+    
+    if (!bearerToken) {
+      setError('La empresa no tiene un token DIAN configurado');
+      return;
+    }
     
     setResolutionModal({
       isOpen: true,
@@ -105,8 +130,13 @@ const ResolutionList: React.FC = () => {
 
   // Abrir modal para editar resolución
   const handleEditResolution = (resolution: Resolution) => {
-    // Obtener el bearer token
-    const bearerToken = localStorage.getItem('auth_token') || '';
+    // Usar el token específico de la empresa
+    const bearerToken = company?.tokenDian || '';
+    
+    if (!bearerToken) {
+      setError('La empresa no tiene un token DIAN configurado');
+      return;
+    }
     
     setResolutionModal({
       isOpen: true,
@@ -163,7 +193,10 @@ const ResolutionList: React.FC = () => {
               <span>Resoluciones</span>
             </h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Resoluciones de la empresa ID: {companyId}
+              {company ? 
+                `NIT: ${company.identificationNumber}` : 
+                `Empresa ID: ${companyId}`
+              }
             </p>
           </div>
         </div>
@@ -362,7 +395,7 @@ const ResolutionList: React.FC = () => {
         isOpen={resolutionModal.isOpen}
         onClose={handleCloseModal}
         companyId={Number(companyId)}
-        companyName={`Empresa ID: ${companyId}`}
+        companyName={company ? `NIT: ${company.identificationNumber}` : `Empresa ID: ${companyId}`}
         bearerToken={resolutionModal.bearerToken}
         onSuccess={handleModalSuccess}
         initialData={resolutionModal.editingResolution}
