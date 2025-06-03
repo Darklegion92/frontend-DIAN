@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
@@ -8,6 +8,7 @@ import Button from './Button';
 import Input from './Input';
 import CertificateUploadModal from './CertificateUploadModal';
 import ProductionModal from './ProductionModal';
+import SoftwareModal from './SoftwareModal';
 
 const CompanyList: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +41,15 @@ const CompanyList: React.FC = () => {
 
   // Estado del modal de producción
   const [productionModal, setProductionModal] = useState<{
+    isOpen: boolean;
+    company: Company | null;
+  }>({
+    isOpen: false,
+    company: null
+  });
+
+  // Estado del modal de software
+  const [softwareModal, setSoftwareModal] = useState<{
     isOpen: boolean;
     company: Company | null;
   }>({
@@ -173,6 +183,13 @@ const CompanyList: React.FC = () => {
           company: company
         });
         break;
+      case 'crear-software':
+        // Abrir modal para crear software
+        setSoftwareModal({
+          isOpen: true,
+          company: company
+        });
+        break;
       default:
         break;
     }
@@ -207,6 +224,22 @@ const CompanyList: React.FC = () => {
   // Cerrar modal de producción
   const handleProductionModalClose = () => {
     setProductionModal({
+      isOpen: false,
+      company: null
+    });
+  };
+
+  // Manejar éxito del modal de software
+  const handleSoftwareSuccess = (message: string) => {
+    // Mostrar mensaje de éxito (puedes implementar un toast aquí)
+    console.log('Software creado exitosamente:', message);
+    // Recargar la lista de empresas si es necesario
+    loadCompanies();
+  };
+
+  // Cerrar modal de software
+  const handleSoftwareModalClose = () => {
+    setSoftwareModal({
       isOpen: false,
       company: null
     });
@@ -291,6 +324,18 @@ const CompanyList: React.FC = () => {
                       Requerido
                     </span>
                   )}
+                </button>
+                
+                {/* Separador */}
+                <div className="border-t border-gray-100 my-1" />
+                
+                {/* Acciones de software */}
+                <button
+                  onClick={() => handleAction('crear-software', company)}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  <Settings className="h-4 w-4 mr-3 text-blue-500" />
+                  Crear Software
                 </button>
                 
                 {/* Separador */}
@@ -544,6 +589,16 @@ const CompanyList: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleAction('crear-software', company)}
+                            className="text-xs px-2 py-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                          >
+                            <Settings className="h-3 w-3 mr-1" />
+                            Soft.
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleAction('ver-resoluciones', company)}
                             className="text-xs px-2 py-1 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200"
                           >
@@ -654,6 +709,14 @@ const CompanyList: React.FC = () => {
         onClose={handleProductionModalClose}
         company={productionModal.company}
         onSuccess={handleProductionSuccess}
+      />
+      
+      {/* Modal de Software */}
+      <SoftwareModal
+        isOpen={softwareModal.isOpen}
+        onClose={handleSoftwareModalClose}
+        company={softwareModal.company}
+        onSuccess={handleSoftwareSuccess}
       />
     </div>
   );
