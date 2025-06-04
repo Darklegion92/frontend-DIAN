@@ -57,7 +57,7 @@ class TypeDocumentService {
    */
   async getActiveTypeDocuments(): Promise<TypeDocumentOption[]> {
     try {
-      const response = await apiClient.get('/type-documents');
+      const response = await apiClient.get('/catalogs/type-documents');
       
       // La respuesta viene envuelta en { success, statusCode, data: [...] }
       if (response.data && response.data.data && Array.isArray(response.data.data)) {

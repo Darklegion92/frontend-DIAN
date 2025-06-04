@@ -226,6 +226,33 @@ class CatalogService {
       throw new Error('Error al obtener el municipio. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Obtener tipos de documentos
+   */
+  async getTypeDocuments(): Promise<CatalogOption[]> {
+    try {
+      const response = await apiClient.get('/catalogs/type-documents');
+      
+      // Verificar si la respuesta viene envuelta
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      
+      // Si viene en formato directo
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Si no es array, devolver array vacío
+      return [];
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al obtener los tipos de documentos. Verifique su conexión a internet.');
+    }
+  }
 }
 
 // Exportar instancia única del servicio

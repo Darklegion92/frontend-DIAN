@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { UserRole } from './services/authService';
 import LoginPage from './components/LoginPage';
 import Layout from './components/Layout';
 import CompanyList from './components/CompanyList';
@@ -9,10 +10,10 @@ import ResolutionList from './components/ResolutionList';
 import DocumentList from './components/DocumentList';
 import UserManagement from './components/UserManagement';
 import UserProfile from './components/UserProfile';
-import AdminRoute from './components/AdminRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 
-// Componente para rutas protegidas
+// Componente para rutas protegidas (requiere autenticación)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -50,7 +51,7 @@ const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/companies" replace />;
+    return <Navigate to="/profile" replace />;
   }
 
   return <>{children}</>;
@@ -62,11 +63,11 @@ const AppContent: React.FC = () => {
     <Router>
       <div className="App">
         <Routes>
-          {/* Ruta raíz - redirige a companies si está autenticado, sino al login */}
+          {/* Ruta raíz - redirige a perfil (accesible para todos) */}
           <Route 
             path="/" 
             element={
-              <Navigate to="/companies" replace />
+              <Navigate to="/profile" replace />
             } 
           />
           
@@ -80,14 +81,16 @@ const AppContent: React.FC = () => {
             } 
           />
           
-          {/* Rutas protegidas */}
+          {/* RUTAS DE EMPRESAS - SOLO DEALER Y ADMIN */}
           <Route 
             path="/companies" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <CompanyList />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                  <Layout>
+                    <CompanyList />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
@@ -96,9 +99,11 @@ const AppContent: React.FC = () => {
             path="/companies/create" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <CreateCompany />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                  <Layout>
+                    <CreateCompany />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
@@ -107,9 +112,11 @@ const AppContent: React.FC = () => {
             path="/companies/:id" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <CreateCompany />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                  <Layout>
+                    <CreateCompany />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
@@ -118,46 +125,53 @@ const AppContent: React.FC = () => {
             path="/companies/:companyId/resolutions" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <ResolutionList />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                  <Layout>
+                    <ResolutionList />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
           
+          {/* RUTAS DE DOCUMENTOS - ADMIN Y DEALER */}
           <Route 
             path="/documents" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <DocumentList />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                  <Layout>
+                    <DocumentList />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
 
-          {/* Perfil de usuario (Todos los usuarios autenticados) */}
+          {/* RUTA DE PERFIL - TODOS */}
           <Route 
             path="/profile" 
             element={
               <ProtectedRoute>
-                <Layout>
-                  <UserProfile />
-                </Layout>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER, UserRole.USER]}>
+                  <Layout>
+                    <UserProfile />
+                  </Layout>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />
 
-          {/* Rutas de administración (Solo ADMIN) */}
+          {/* RUTAS DE USUARIOS - SOLO ADMIN */}
           <Route 
             path="/admin/users" 
             element={
               <ProtectedRoute>
-                <AdminRoute>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
                   <Layout>
                     <UserManagement />
                   </Layout>
-                </AdminRoute>
+                </RoleBasedRoute>
               </ProtectedRoute>
             } 
           />

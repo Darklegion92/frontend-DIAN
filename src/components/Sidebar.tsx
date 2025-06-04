@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Building2, LogOut, Menu, X, FileText, Users, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { usePermissions } from '../hooks/usePermissions';
 import { UserRole } from '../services/authService';
 import Logo from './Logo';
 import Button from './Button';
@@ -21,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const permissions = usePermissions();
 
   // Efecto para notificar al padre cuando cambia el estado
   useEffect(() => {
@@ -50,32 +52,23 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
     }
   };
 
-  // Configurar elementos del menú basado en el rol del usuario
+  // Configurar elementos del menú basado en los permisos del usuario
   const getMenuItems = () => {
-    const baseItems = [
-      {
+    const items = [];
+
+    // Empresas - SOLO DEALER Y ADMIN
+    if (permissions.canAccessCompanies) {
+      items.push({
         name: 'Empresas',
         path: '/companies',
         icon: Building2,
         description: 'Gestión de empresas'
-      },
-      {
-        name: 'Documentos',
-        path: '/documents',
-        icon: FileText,
-        description: 'Documentos electrónicos'
-      },
-      {
-        name: 'Mi Perfil',
-        path: '/profile',
-        icon: UserCircle,
-        description: 'Información personal'
-      }
-    ];
+      });
+    }
 
-    // Solo mostrar gestión de usuarios para administradores
-    if (user?.role === UserRole.ADMIN) {
-      baseItems.splice(2, 0, {
+    // Usuarios - SOLO ADMIN
+    if (permissions.canAccessUsers) {
+      items.push({
         name: 'Usuarios',
         path: '/admin/users',
         icon: Users,
@@ -83,7 +76,27 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
       });
     }
 
-    return baseItems;
+    // Documentos - ADMIN Y DEALER
+    if (permissions.canAccessDocuments) {
+      items.push({
+        name: 'Documentos',
+        path: '/documents',
+        icon: FileText,
+        description: 'Documentos electrónicos'
+      });
+    }
+
+    // Perfil - TODOS
+    if (permissions.canAccessProfile) {
+      items.push({
+        name: 'Mi Perfil',
+        path: '/profile',
+        icon: UserCircle,
+        description: 'Información personal'
+      });
+    }
+
+    return items;
   };
 
   const menuItems = getMenuItems();
@@ -216,4 +229,4 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
