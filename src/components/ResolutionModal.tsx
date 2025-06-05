@@ -29,13 +29,7 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
   const [formData, setFormData] = useState<Omit<CreateResolutionData, 'company_id' | 'bearerToken'>>({
     type_document_id: 1,
     prefix: '',
-    resolution: '',
-    resolution_date: '',
-    from: 1,
-    to: 1000,
-    generated_to_date: 0,
-    date_from: '',
-    date_to: ''
+    resolution: '1',
   });
   
   const [loading, setLoading] = useState(false);
@@ -79,31 +73,14 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
         setFormData({
           type_document_id: initialData.typeDocumentId,
           prefix: initialData.prefix || '',
-          resolution: initialData.resolution || '',
-          resolution_date: initialData.resolutionDate ? initialData.resolutionDate.split('T')[0] : '',
-          from: initialData.from,
-          to: initialData.to,
-          generated_to_date: 0,
-          date_from: initialData.dateFrom ? initialData.dateFrom.split('T')[0] : '',
-          date_to: initialData.dateTo ? initialData.dateTo.split('T')[0] : ''
+          resolution: initialData.resolution || '1',
         });
       } else {
-        // Modo creación - valores por defecto
-        const today = new Date().toISOString().split('T')[0];
-        const nextYear = new Date();
-        nextYear.setFullYear(nextYear.getFullYear() + 10);
-        const futureDate = nextYear.toISOString().split('T')[0];
 
         setFormData({
           type_document_id: 1,
-          prefix: 'SETP',
-          resolution: '',
-          resolution_date: today,
-          from: 1,
-          to: 1000,
-          generated_to_date: 0,
-          date_from: today,
-          date_to: futureDate
+          prefix: '',
+          resolution: '1',
         });
       }
       setError(null);
@@ -120,19 +97,7 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
   const validateForm = (): string | null => {
     if (!formData.type_document_id || formData.type_document_id <= 0) return 'Seleccione un tipo de documento válido';
     if (!formData.prefix.trim()) return 'El prefijo es requerido';
-    if (!formData.resolution.trim()) return 'El número de resolución es requerido';
-    if (!formData.resolution_date) return 'La fecha de resolución es requerida';
-    if (!formData.date_from) return 'La fecha de inicio de vigencia es requerida';
-    if (!formData.date_to) return 'La fecha de fin de vigencia es requerida';
-    if (formData.from < 0) return 'El número inicial debe ser mayor o igual a 0';
-    if (formData.to <= formData.from) return 'El número final debe ser mayor al inicial';
-    
-    // Validar fechas
-    const resolutionDate = new Date(formData.resolution_date);
-    const dateFrom = new Date(formData.date_from);
-    const dateTo = new Date(formData.date_to);
-    
-    if (dateFrom >= dateTo) return 'La fecha de inicio debe ser anterior a la fecha de fin';
+    if (!formData.resolution.trim()) return 'El número de resolución es requerido';  
     
     return null;
   };
@@ -260,85 +225,6 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
                     value={formData.resolution}
                     onChange={(e) => handleInputChange('resolution', e.target.value)}
                     placeholder="Ej: 18760000001"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Fecha de resolución */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Resolución *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.resolution_date}
-                    onChange={(e) => handleInputChange('resolution_date', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Rango inicial */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número Inicial del Rango *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.from}
-                    onChange={(e) => handleInputChange('from', Number(e.target.value))}
-                    placeholder="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                    required
-                    disabled={loading}
-                    min={0}
-                  />
-                </div>
-
-                {/* Rango final */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número Final del Rango *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.to}
-                    onChange={(e) => handleInputChange('to', Number(e.target.value))}
-                    placeholder="1000"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                    required
-                    disabled={loading}
-                    min={1}
-                  />
-                </div>
-
-                {/* Fecha de inicio de vigencia */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Inicio de Vigencia *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date_from}
-                    onChange={(e) => handleInputChange('date_from', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Fecha de fin de vigencia */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Fin de Vigencia *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date_to}
-                    onChange={(e) => handleInputChange('date_to', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
                     required
                     disabled={loading}
                   />

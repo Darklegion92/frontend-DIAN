@@ -46,12 +46,6 @@ export interface CreateResolutionData {
   type_document_id: number;
   prefix: string;
   resolution: string;
-  resolution_date: string;
-  from: number;
-  to: number;
-  generated_to_date: number;
-  date_from: string;
-  date_to: string;
   bearerToken: string;
   company_id: number;
 }
