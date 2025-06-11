@@ -12,6 +12,7 @@ import UserManagement from './components/UserManagement';
 import UserProfile from './components/UserProfile';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import { ReceivedDocumentsList } from './components/ReceivedDocuments/ReceivedDocumentsList';
 
 // Componente para rutas protegidas (requiere autenticación)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,6 +60,7 @@ const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // Componente principal de la aplicación
 const AppContent: React.FC = () => {
+  const { user } = useAuth();
   return (
     <Router>
       <div className="App">
@@ -139,14 +141,26 @@ const AppContent: React.FC = () => {
             path="/documents" 
             element={
               <ProtectedRoute>
-                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
-                  <Layout>
-                    <DocumentList />
-                  </Layout>
-                </RoleBasedRoute>
+                <Layout>
+                  <DocumentList />
+                </Layout>
               </ProtectedRoute>
             } 
           />
+
+          {/* RUTAS DE DOCUMENTOS RECIBIDOS - ADMIN Y DEALER */}
+          {user?.company_document && (
+            <Route 
+              path="/received-documents" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ReceivedDocumentsList />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+          )}
 
           {/* RUTA DE PERFIL - TODOS */}
           <Route 

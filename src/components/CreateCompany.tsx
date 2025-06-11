@@ -21,6 +21,12 @@ interface CreateCompanyForm {
   address: string;
   phone: string;
   email: string;
+  // Campos de correo Radianes
+  imap_server?: string;
+  imap_user?: string;
+  imap_password?: string;
+  imap_port?: number | '';
+  imap_encryption?: string;
 }
 
 const CreateCompany: React.FC = () => {
@@ -45,6 +51,11 @@ const CreateCompany: React.FC = () => {
     address: '',
     phone: '',
     email: '',
+    imap_server: '',
+    imap_user: '',
+    imap_password: '',
+    imap_port: '',
+    imap_encryption: '',
   });
 
   // Estados para los catálogos
@@ -96,12 +107,17 @@ const CreateCompany: React.FC = () => {
           type_organization_id: company.typeOrganizationId ? Number(company.typeOrganizationId) : '',
           type_regime_id: company.typeRegimeId ? Number(company.typeRegimeId) : '',
           type_liability_id: company.typeLiabilityId ? Number(company.typeLiabilityId) : '',
-          business_name: '', // Campo no existe en Company, se mantiene vacío para edición manual
+          business_name: '',
           merchant_registration: company.merchantRegistration || '',
           municipality_id: company.municipalityId ? Number(company.municipalityId) : '',
           address: company.address || '',
           phone: company.phone || '',
-          email: '', // Campo no existe en Company, se mantiene vacío para edición manual
+          email: '',
+          imap_server: company.imapServer || '',
+          imap_user: company.imapUser || '',
+          imap_password: company.imapPassword || '',
+          imap_port: company.imapPort || '',
+          imap_encryption: company.imapEncryption || '',
         };
         
         setFormData(newFormData);
@@ -422,6 +438,55 @@ const CreateCompany: React.FC = () => {
                   {...{ name: "email", maxLength: 100 }}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Datos de correo Radianes */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Datos de correo Radianes</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Servidor IMAP"
+                value={formData.imap_server}
+                onChange={handleInputChange}
+                placeholder="mail.ejemplo.com"
+                disabled={loading}
+                {...{name:"imap_server"}}
+              />
+              <Input
+                label="Usuario IMAP"
+                value={formData.imap_user}
+                onChange={handleInputChange}
+                placeholder="usuario@ejemplo.com"
+                disabled={loading}
+                {...{name:"imap_user"}}
+              />
+              <Input
+                label="Contraseña IMAP"
+                type="password"
+                value={formData.imap_password}
+                onChange={handleInputChange}
+                placeholder="********"
+                disabled={loading}
+                {...{name:"imap_password"}}
+              />
+              <Input
+                label="Puerto IMAP"
+                type="number"
+                value={formData.imap_port !== undefined && formData.imap_port !== '' ? String(formData.imap_port) : ''}
+                onChange={handleInputChange}
+                placeholder="993"
+                disabled={loading}
+                {...{name:"imap_port"}}
+              />
+              <Input
+                label="Encriptación IMAP"
+                value={formData.imap_encryption}
+                onChange={handleInputChange}
+                placeholder="ssl/tls"
+                disabled={loading}
+                {...{name:"imap_encryption"}}
+              />
             </div>
           </div>
 

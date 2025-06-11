@@ -19,11 +19,11 @@ export interface Company {
   state: boolean;
   password?: string;
   allowSellerLogin: boolean;
-  imapServer?: string;
-  imapPort?: string;
-  imapUser?: string;
-  imapPassword?: string;
-  imapEncryption?: string;
+  imapServer?: string | null;
+  imapPort?: number | null;
+  imapUser?: string | null;
+  imapPassword?: string | null;
+  imapEncryption?: string | null;
   soltecUserId: string;
   userId?: number;
   createdAt: string;

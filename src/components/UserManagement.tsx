@@ -78,7 +78,13 @@ const UserManagement: React.FC = () => {
         username: userData.username,
         email: userData.email,
         name: userData.name,
-        role: userData.role
+        role: userData.role,
+        company_document: userData.company_document,
+        document_person_responsible: userData.document_person_responsible,
+        first_name_person_responsible: userData.first_name_person_responsible,
+        last_name_person_responsible: userData.last_name_person_responsible,
+        job_title_person_responsible: userData.job_title_person_responsible,
+        organization_department_person_responsible: userData.organization_department_person_responsible,
       };
       
       // Solo incluir contraseña si se proporcionó

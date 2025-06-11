@@ -71,6 +71,12 @@ export interface User {
     identification_number: string;
     name: string;
   };
+  company_document?: string;
+  document_person_responsible?: string;
+  first_name_person_responsible?: string;
+  last_name_person_responsible?: string;
+  job_title_person_responsible?: string;
+  organization_department_person_responsible?: string;
 }
 
 export interface CreateUserData {
@@ -79,6 +85,12 @@ export interface CreateUserData {
   name: string;
   password: string;
   role: UserRole;
+  company_document?: string;
+  document_person_responsible?: string;
+  first_name_person_responsible?: string;
+  last_name_person_responsible?: string;
+  job_title_person_responsible?: string;
+  organization_department_person_responsible?: string;
 }
 
 export interface UpdateUserData {
@@ -87,6 +99,12 @@ export interface UpdateUserData {
   name?: string;
   password?: string;
   role?: UserRole;
+  company_document?: string;
+  document_person_responsible?: string;
+  first_name_person_responsible?: string;
+  last_name_person_responsible?: string;
+  job_title_person_responsible?: string;
+  organization_department_person_responsible?: string;
 }
 
 export interface PaginationQuery {

@@ -172,6 +172,65 @@ const UserProfile: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Responsable de Radianes */}
+          {(user.document_person_responsible || user.first_name_person_responsible || user.last_name_person_responsible || user.job_title_person_responsible || user.organization_department_person_responsible) && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-md font-medium text-gray-900 mb-3">Responsable de Radianes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {user.document_person_responsible && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Documento Responsable
+                    </label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-gray-900">{user.document_person_responsible}</p>
+                    </div>
+                  </div>
+                )}
+                {user.first_name_person_responsible && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nombre Responsable
+                    </label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-gray-900">{user.first_name_person_responsible}</p>
+                    </div>
+                  </div>
+                )}
+                {user.last_name_person_responsible && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Apellido Responsable
+                    </label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-gray-900">{user.last_name_person_responsible}</p>
+                    </div>
+                  </div>
+                )}
+                {user.job_title_person_responsible && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cargo Responsable
+                    </label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-gray-900">{user.job_title_person_responsible}</p>
+                    </div>
+                  </div>
+                )}
+                {user.organization_department_person_responsible && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Organización Responsable
+                    </label>
+                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-gray-900">{user.organization_department_person_responsible}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Configuración de Seguridad */}

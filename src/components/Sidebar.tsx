@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, LogOut, Menu, X, FileText, Users, UserCircle } from 'lucide-react';
+import { Building2, LogOut, Menu, X, FileText, Users, UserCircle, Inbox } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { UserRole } from '../services/authService';
@@ -24,12 +24,21 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
   const { user, logout } = useAuth();
   const permissions = usePermissions();
 
+  // Debug: Verificar valor de user y company_document
+  console.log('Sidebar user:', user);
+  console.log('Sidebar user.company_document:', user?.company_document);
+
   // Efecto para notificar al padre cuando cambia el estado
   useEffect(() => {
     if (onToggle) {
       onToggle(isCollapsed);
     }
   }, [isCollapsed, onToggle]);
+
+  // Solo aquí el condicional de renderizado
+  if (!user) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
@@ -84,6 +93,16 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
         icon: FileText,
         description: 'Documentos electrónicos'
       });
+
+      // Documentos Recibidos - ADMIN Y DEALER
+      if (user?.company_document && user.company_document.trim() !== '') {
+        items.push({
+          name: 'Radianes',
+          path: '/received-documents',
+          icon: Inbox,
+          description: 'Gestión de RADIANES'
+        });
+      }
     }
 
     // Perfil - TODOS
