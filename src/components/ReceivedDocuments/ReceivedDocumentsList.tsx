@@ -3,15 +3,27 @@ import { Inbox, Filter, X, Search, Calendar, User, Hash } from 'lucide-react';
 import api from '../../config/api';
 import LoadingSpinner from '../LoadingSpinner';
 import Button from '../Button';
+import { useAuth } from '../../hooks/useAuth';
 
 // Interfaz de radianes
 interface Radian {
-  id: string;
-  documentNumber: string;
-  documentType: string;
-  issueDate: string;
-  sender: string;
-  status: string;
+  id: number;
+  identification_number: string;
+  name_seller: string;
+  type_document_id: string;
+  prefix: string;
+  number: string;
+  date_issue: string;
+  state_document_id: number;
+  customer: string;
+  customer_name: string | null;
+  total: number;
+  total_tax: number;
+  total_discount: number;
+  aceptacion: boolean;
+  rec_bienes: boolean;
+  acu_recibo: boolean;
+  rechazo: boolean;
 }
 
 interface RadianQuery {
@@ -27,14 +39,13 @@ interface RadianQuery {
 
 interface ApiResponse {
   success: boolean;
+  statusCode: number;
   data: {
-    data: Radian[];
-    meta: {
-      currentPage: number;
-      itemsPerPage: number;
-      totalItems: number;
-      totalPages: number;
-    };
+    items: Radian[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   };
 }
 
@@ -59,6 +70,13 @@ export const ReceivedDocumentsList: React.FC = () => {
     totalItems: 0,
     itemsPerPage: 10,
   });
+  const [fetchingEmails, setFetchingEmails] = useState(false);
+  const [fetchEmailsMsg, setFetchEmailsMsg] = useState<string | null>(null);
+  const [showFetchModal, setShowFetchModal] = useState(false);
+  const [fetchStartDate, setFetchStartDate] = useState('');
+  const [fetchEndDate, setFetchEndDate] = useState('');
+
+  const { user } = useAuth();
 
   useEffect(() => {
     loadRadianes();
@@ -69,9 +87,8 @@ export const ReceivedDocumentsList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      // Adaptar los filtros al backend si es necesario
       const params = {
-        documentNumber: filters.documentNumber,
+        customer: user?.company_document,
         documentType: filters.documentType,
         sender: filters.sender,
         status: filters.status,
@@ -81,13 +98,13 @@ export const ReceivedDocumentsList: React.FC = () => {
         perPage: filters.perPage,
       };
       const response = await api.get<ApiResponse>('/received-documents', { params });
-      if (response.data.success && Array.isArray(response.data.data.data)) {
-        setRadianes(response.data.data.data);
+      if (response.data.success && Array.isArray(response.data.data.items)) {
+        setRadianes(response.data.data.items);
         setPagination({
-          currentPage: response.data.data.meta.currentPage,
-          totalPages: response.data.data.meta.totalPages,
-          totalItems: response.data.data.meta.totalItems,
-          itemsPerPage: response.data.data.meta.itemsPerPage,
+          currentPage: response.data.data.page,
+          totalPages: response.data.data.totalPages,
+          totalItems: response.data.data.total,
+          itemsPerPage: response.data.data.limit,
         });
       } else {
         setRadianes([]);
@@ -126,6 +143,58 @@ export const ReceivedDocumentsList: React.FC = () => {
     setFilters((prev) => ({ ...prev, page: newPage }));
   };
 
+  // Helper para obtener la fecha actual en formato YYYY-MM-DD
+  const getToday = () => {
+    const today = new Date();
+    return today.toISOString().slice(0, 10);
+  };
+
+  const openFetchModal = () => {
+    const today = getToday();
+    setFetchStartDate(today);
+    setFetchEndDate(today);
+    setShowFetchModal(true);
+  };
+
+  const handleFetchEmails = async () => {
+    setFetchingEmails(true);
+    setFetchEmailsMsg(null);
+    try {
+      // Sumar un día a la fecha final
+      const endDate = new Date(fetchEndDate);
+      endDate.setDate(endDate.getDate() + 1);
+      const formattedEndDate = endDate.toISOString().split('T')[0];
+
+      const response = await api.post('/received-documents/fetch-invoices-email', {
+        start_date: fetchStartDate,
+        end_date: formattedEndDate,
+      });
+      setFetchEmailsMsg("Se encontraron " + response.data.data.length + " facturas.");
+      await loadRadianes();
+      setShowFetchModal(false);
+    } catch (err: any) {
+      setFetchEmailsMsg(err.response?.data?.message || 'Error al consultar correos.');
+    } finally {
+      setFetchingEmails(false);
+    }
+  };
+
+  const getStatusInfo = (doc: Radian) => {
+    if (doc.aceptacion) {
+      return { text: 'Aceptado', color: 'bg-green-100 text-green-800' };
+    }
+    if (doc.rec_bienes) {
+      return { text: 'En Revisión', color: 'bg-yellow-100 text-yellow-800' };
+    }
+    if (doc.acu_recibo) {
+      return { text: 'Recibida', color: 'bg-blue-100 text-blue-800' };
+    }
+    if (doc.rechazo) {
+      return { text: 'Rechazada', color: 'bg-red-100 text-red-800' };
+    }
+    return { text: 'Sin Procesar', color: 'bg-gray-100 text-gray-800' };
+  };
+
   // Render loading
   if (loading && radianes.length === 0) {
     return (
@@ -151,15 +220,69 @@ export const ReceivedDocumentsList: React.FC = () => {
             Consulta y gestiona todos los radianes recibidos
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center"
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            variant="primary"
+            onClick={openFetchModal}
+            disabled={fetchingEmails}
+            className="flex items-center"
+          >
+            <Inbox className="h-4 w-4 mr-2" />
+            Consultar Correos
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+          </Button>
+        </div>
       </div>
+      {fetchEmailsMsg && (
+        <div className={`mt-2 p-3 rounded-lg text-sm ${fetchEmailsMsg.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800'}`}>{fetchEmailsMsg}</div>
+      )}
+      {/* Modal para fechas de consulta de correos */}
+      {showFetchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Consultar Correos por Fechas</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Inicial</label>
+                <input
+                  type="date"
+                  value={fetchStartDate}
+                  onChange={e => setFetchStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+                  disabled={fetchingEmails}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Final</label>
+                <input
+                  type="date"
+                  value={fetchEndDate}
+                  onChange={e => setFetchEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+                  disabled={fetchingEmails}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowFetchModal(false)} disabled={fetchingEmails}>Cancelar</Button>
+              <Button
+                variant="primary"
+                onClick={handleFetchEmails}
+                disabled={fetchingEmails || !fetchStartDate || !fetchEndDate}
+              >
+                {fetchingEmails ? <LoadingSpinner size="sm" color="white" /> : 'Consultar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filtros */}
       {showFilters && (
@@ -254,13 +377,16 @@ export const ReceivedDocumentsList: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remitente</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IVA</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {radianes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-16 text-center text-gray-400">
+                <td colSpan={8} className="py-16 text-center text-gray-400">
                   <div className="flex flex-col items-center justify-center">
                     <Inbox className="w-12 h-12 mb-2 text-gray-300" />
                     <span className="font-semibold text-lg">No hay radianes</span>
@@ -269,21 +395,25 @@ export const ReceivedDocumentsList: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              radianes.map((doc) => (
-                <tr key={doc.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{doc.documentNumber}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{doc.documentType}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{new Date(doc.issueDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{doc.sender}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      doc.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {doc.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              radianes.map((doc) => {
+                const statusInfo = getStatusInfo(doc);
+                return (
+                  <tr key={doc.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">{doc.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{doc.type_document_id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{new Date(doc.date_issue).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{doc.name_seller}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">${doc.total.toLocaleString('es-CO')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">${doc.total_tax.toLocaleString('es-CO')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">${doc.total_discount.toLocaleString('es-CO')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.color}`}>
+                        {statusInfo.text}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
