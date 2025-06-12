@@ -93,10 +93,9 @@ export const ReceivedDocumentsList: React.FC = () => {
       const params = {
         customer: user?.company_document,
         documentType: filters.documentType,
-        sender: filters.sender,
+        identification_number: filters.sender,
         status: filters.status,
         issueDateFrom: filters.issueDateFrom,
-        issueDateTo: filters.issueDateTo,
         page: filters.page,
         perPage: filters.perPage,
       };
@@ -136,7 +135,6 @@ export const ReceivedDocumentsList: React.FC = () => {
       sender: '',
       status: '',
       issueDateFrom: '',
-      issueDateTo: '',
       page: 1,
       perPage: 10,
     });
@@ -338,31 +336,9 @@ export const ReceivedDocumentsList: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Número de documento */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Número de Documento</label>
-                <input
-                  type="text"
-                  value={filters.documentNumber}
-                  onChange={(e) => handleFilterChange('documentNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                  disabled={loading}
-                />
-              </div>
-              {/* Tipo de documento */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-                <input
-                  type="text"
-                  value={filters.documentType}
-                  onChange={(e) => handleFilterChange('documentType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                  disabled={loading}
-                />
-              </div>
               {/* Remitente */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Remitente</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Doc. Cliente</label>
                 <input
                   type="text"
                   value={filters.sender}
@@ -371,35 +347,13 @@ export const ReceivedDocumentsList: React.FC = () => {
                   disabled={loading}
                 />
               </div>
-              {/* Estado */}
+              {/* Fecha */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                <input
-                  type="text"
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                  disabled={loading}
-                />
-              </div>
-              {/* Fecha desde */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
                 <input
                   type="date"
                   value={filters.issueDateFrom}
                   onChange={(e) => handleFilterChange('issueDateFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
-                  disabled={loading}
-                />
-              </div>
-              {/* Fecha hasta */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
-                <input
-                  type="date"
-                  value={filters.issueDateTo}
-                  onChange={(e) => handleFilterChange('issueDateTo', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
                   disabled={loading}
                 />
