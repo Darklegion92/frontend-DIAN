@@ -56,7 +56,13 @@ const UserManagement: React.FC = () => {
         email: userData.email,
         name: userData.name,
         role: userData.role,
-        password: (userData as CreateUserData).password || ''
+        password: (userData as CreateUserData).password || '',
+        company_document: userData.company_document,
+        document_person_responsible: userData.document_person_responsible,
+        first_name_person_responsible: userData.first_name_person_responsible,
+        last_name_person_responsible: userData.last_name_person_responsible,
+        job_title_person_responsible: userData.job_title_person_responsible,
+        organization_department_person_responsible: userData.organization_department_person_responsible,
       };
       
       if (!createData.password) {
@@ -91,7 +97,7 @@ const UserManagement: React.FC = () => {
       if ((userData as CreateUserData).password) {
         updateData.password = (userData as CreateUserData).password;
       }
-      
+
       await authService.updateUser(id, updateData);
       await loadUsers();
       setIsModalOpen(false);
