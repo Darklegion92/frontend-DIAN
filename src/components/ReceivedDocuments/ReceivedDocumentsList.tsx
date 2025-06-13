@@ -86,7 +86,7 @@ export const ReceivedDocumentsList: React.FC = () => {
   useEffect(() => {
     loadRadianes();
     // eslint-disable-next-line
-  }, [filters.page]);
+  }, [filters.page, filters.perPage]);
 
   const loadRadianes = async () => {
     try {
@@ -99,13 +99,15 @@ export const ReceivedDocumentsList: React.FC = () => {
         status: filters.status,
         issueDateFrom: filters.issueDateFrom,
         page: filters.page,
-        perPage: filters.perPage,
+        limit: filters.perPage,
       };
 
       // Solo agregar el parámetro aceptacion si está definido
       if (filters.aceptacion !== undefined) {
         params.aceptacion = filters.aceptacion;
       }
+
+      console.log('Cargando con parámetros:', params);
 
       const response = await api.get<ApiResponse>('/received-documents', { params });
       if (response.data.success && Array.isArray(response.data.data.items)) {
@@ -267,6 +269,12 @@ export const ReceivedDocumentsList: React.FC = () => {
     } finally {
       setProcessingAction(false);
     }
+  };
+
+  const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Math.min(500, Math.max(10, parseInt(e.target.value)));
+    setFilters(prev => ({ ...prev, perPage: value, page: 1 }));
+    loadRadianes();
   };
 
   // Render loading
@@ -488,7 +496,25 @@ export const ReceivedDocumentsList: React.FC = () => {
 
       {/* Paginación */}
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center mt-6">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
+          <div className="flex items-center space-x-2">
+            <label htmlFor="perPage" className="text-sm text-gray-700">
+              Registros por página:
+            </label>
+            <select
+              id="perPage"
+              value={filters.perPage}
+              onChange={handlePerPageChange}
+              className="rounded-md border-gray-300 text-sm focus:ring-soltec-primary focus:border-soltec-primary"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+              <option value="500">500</option>
+            </select>
+          </div>
           <nav className="inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
             <button
               className="px-3 py-1 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50"
