@@ -179,11 +179,17 @@ export const ReceivedDocumentsList: React.FC = () => {
         start_date: fetchStartDate,
         end_date: formattedEndDate,
       });
-      setFetchEmailsMsg("Se encontraron " + response.data.data.length + " facturas.");
+
+      if (response.data.data?.length > 0) {
+        setFetchEmailsMsg("Se encontraron " + response.data.data?.length + " facturas.");
+      } else {
+        setFetchEmailsMsg(response.data?.message);
+      }
       await loadRadianes();
       setShowFetchModal(false);
     } catch (err: any) {
-      setFetchEmailsMsg(err.response?.data?.message || 'Error al consultar correos.');
+      console.log(err);
+      setFetchEmailsMsg(err.response?.message || 'Error al consultar correos.');
     } finally {
       setFetchingEmails(false);
     }
