@@ -22,11 +22,11 @@ interface CreateCompanyForm {
   phone: string;
   email: string;
   // Campos de correo Radianes
-  imap_server?: string;
-  imap_user?: string;
-  imap_password?: string;
-  imap_port?: number | '';
-  imap_encryption?: string;
+  imap_server?: string | null;
+  imap_user?: string | null;
+  imap_password?: string | null;
+  imap_port?: number | null;
+  imap_encryption?: string | null;
 }
 
 const CreateCompany: React.FC = () => {
@@ -51,11 +51,6 @@ const CreateCompany: React.FC = () => {
     address: '',
     phone: '',
     email: '',
-    imap_server: '',
-    imap_user: '',
-    imap_password: '',
-    imap_port: '',
-    imap_encryption: '',
   });
 
   // Estados para los catálogos
@@ -113,11 +108,11 @@ const CreateCompany: React.FC = () => {
           address: company.address || '',
           phone: company.phone || '',
           email: '',
-          imap_server: company.imapServer || '',
-          imap_user: company.imapUser || '',
-          imap_password: company.imapPassword || '',
-          imap_port: company.imapPort || '',
-          imap_encryption: company.imapEncryption || '',
+          imap_server: company.imapServer,
+          imap_user: company.imapUser,
+          imap_password: company.imapPassword,
+          imap_port: company.imapPort,
+          imap_encryption: company.imapEncryption,
         };
         
         setFormData(newFormData);
@@ -164,6 +159,13 @@ const CreateCompany: React.FC = () => {
     try {
       // Validar que todos los campos estén completos
       const requiredFields = Object.keys(formData) as (keyof CreateCompanyForm)[];
+      // Eliminar campos que no sean obligatorios
+      requiredFields.splice(requiredFields.indexOf('imap_server'), 1);
+      requiredFields.splice(requiredFields.indexOf('imap_user'), 1);
+      requiredFields.splice(requiredFields.indexOf('imap_password'), 1);
+      requiredFields.splice(requiredFields.indexOf('imap_port'), 1);
+      requiredFields.splice(requiredFields.indexOf('imap_encryption'), 1);
+
       const emptyFields = requiredFields.filter(field => formData[field] === '' || formData[field] === null);
       
       if (emptyFields.length > 0) {
@@ -447,7 +449,7 @@ const CreateCompany: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Servidor IMAP"
-                value={formData.imap_server}
+                value={formData.imap_server || ''}
                 onChange={handleInputChange}
                 placeholder="mail.ejemplo.com"
                 disabled={loading}
@@ -455,7 +457,7 @@ const CreateCompany: React.FC = () => {
               />
               <Input
                 label="Usuario IMAP"
-                value={formData.imap_user}
+                value={formData.imap_user || ''}
                 onChange={handleInputChange}
                 placeholder="usuario@ejemplo.com"
                 disabled={loading}
@@ -464,7 +466,7 @@ const CreateCompany: React.FC = () => {
               <Input
                 label="Contraseña IMAP"
                 type="password"
-                value={formData.imap_password}
+                value={formData.imap_password || ''}
                 onChange={handleInputChange}
                 placeholder="********"
                 disabled={loading}
@@ -473,7 +475,7 @@ const CreateCompany: React.FC = () => {
               <Input
                 label="Puerto IMAP"
                 type="number"
-                value={formData.imap_port !== undefined && formData.imap_port !== '' ? String(formData.imap_port) : ''}
+                value={formData.imap_port !== undefined && formData.imap_port ? String(formData.imap_port) : ''}
                 onChange={handleInputChange}
                 placeholder="993"
                 disabled={loading}
@@ -481,7 +483,7 @@ const CreateCompany: React.FC = () => {
               />
               <Input
                 label="Encriptación IMAP"
-                value={formData.imap_encryption}
+                value={formData.imap_encryption || ''}
                 onChange={handleInputChange}
                 placeholder="ssl/tls"
                 disabled={loading}
