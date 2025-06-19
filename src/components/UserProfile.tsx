@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff, UserCircle } from 'lucide-react';
+import { User, Lock, UserCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { UserRole } from '../services/authService';
 import Button from './Button';
@@ -44,7 +44,7 @@ const UserProfile: React.FC = () => {
       </div>
     );
   }
-
+  console.log("Arranca profile");
   return (
     <>
       <div className="space-y-6">

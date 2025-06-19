@@ -55,8 +55,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       const response = await authService.login(credentials);
       
-      if (response.success && response.data) {
-        setUser(response.data.user);
+      if (response.access_token) {
+        setUser(response?.user || null);
       } else {
         throw new Error(response.message || 'Error en el login');
       }

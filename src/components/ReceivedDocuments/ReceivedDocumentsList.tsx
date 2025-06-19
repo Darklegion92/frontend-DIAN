@@ -40,15 +40,11 @@ interface RadianQuery {
 }
 
 interface ApiResponse {
-  success: boolean;
-  statusCode: number;
-  data: {
     items: Radian[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
-  };
 }
 
 export const ReceivedDocumentsList: React.FC = () => {
@@ -110,13 +106,13 @@ export const ReceivedDocumentsList: React.FC = () => {
       console.log('Cargando con parámetros:', params);
 
       const response = await api.get<ApiResponse>('/received-documents', { params });
-      if (response.data.success && Array.isArray(response.data.data.items)) {
-        setRadianes(response.data.data.items);
+      if (Array.isArray(response.data.items)) {
+        setRadianes(response.data.items);
         setPagination({
-          currentPage: response.data.data.page,
-          totalPages: response.data.data.totalPages,
-          totalItems: response.data.data.total,
-          itemsPerPage: response.data.data.limit,
+          currentPage: response.data.page,
+          totalPages: response.data.totalPages,
+          totalItems: response.data.total,
+          itemsPerPage: response.data.limit,
         });
       } else {
         setRadianes([]);

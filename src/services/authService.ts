@@ -115,8 +115,6 @@ export interface PaginationQuery {
 }
 
 export interface PaginatedResponse<T> {
-  success: boolean;
-  data: {
     data: T[];
     meta: {
       currentPage: number;
@@ -126,16 +124,14 @@ export interface PaginatedResponse<T> {
       hasPreviousPage: boolean;
       hasNextPage: boolean;
     };
-  };
 }
 
 export interface AuthResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    user: User;
-    token: string;
-  };
+    access_token?: string;
+    user?: User;
+    message?: string;
+    error?: string;
+    statusCode?: number;
 }
 
 // Servicio de autenticación
@@ -146,9 +142,9 @@ class AuthService {
   async login(credentials: LoginData): Promise<AuthResponse> {
     try {
       const response = await apiClient.post('/auth/login', credentials);
-      console.log(response.data.data);
-      if (response.data.success && response.data.data) {
-        const { access_token } = response.data.data;
+      console.log(response.data);
+      if ( response.data.access_token) {
+        const { access_token } = response.data;
         
         // Guardar token y datos del usuario en localStorage
         localStorage.setItem('auth_token', access_token);
@@ -206,7 +202,7 @@ class AuthService {
           }
         }
       );
-      return response.data.data;
+      return response.data;
     } catch (error) {
       return null;
     }

@@ -32,6 +32,8 @@ export interface Company {
   certificateId?: number;
   certificateName?: string;
   tokenDian?: string;
+  usuarioDian?: string;
+  userEmail?: string;
 }
 
 export interface PaginationMeta {

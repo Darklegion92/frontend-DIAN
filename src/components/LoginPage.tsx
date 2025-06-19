@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Button from './Button';
 import Input from './Input';
@@ -36,8 +36,6 @@ const LoginPage: React.FC = () => {
     mode: 'onChange',
   });
 
-  const watchedFields = watch();
-
   const onSubmit = async (data: LoginFormData) => {
     try {
       clearError();
@@ -46,7 +44,7 @@ const LoginPage: React.FC = () => {
       
       // Redirigir después de mostrar mensaje de éxito
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/profile';
       }, 1500);
     } catch (error) {
       console.error('Error en login:', error);

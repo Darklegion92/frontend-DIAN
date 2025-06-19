@@ -32,10 +32,10 @@ const UserManagement: React.FC = () => {
         sortBy: 'createdAt',
         sortOrder: 'DESC'
       });
-      
-      setUsers(response.data.data);
-      setTotalPages(response.data.meta.totalPages);
-      setTotalUsers(response.data.meta.totalItems);
+      console.log(response);
+      setUsers(response.data);
+      setTotalPages(response.meta.totalPages);
+      setTotalUsers(response.meta.totalItems);
     } catch (error: any) {
       setError(error.message);
     } finally {
