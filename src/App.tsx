@@ -13,6 +13,7 @@ import UserProfile from './components/UserProfile';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 import { ReceivedDocumentsList } from './components/ReceivedDocuments/ReceivedDocumentsList';
+import VersionManagement from './components/VersionManagement';
 
 // Componente para rutas protegidas (requiere autenticación)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -184,6 +185,20 @@ const AppContent: React.FC = () => {
                 <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
                   <Layout>
                     <UserManagement />
+                  </Layout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* RUTAS DE GESTIÓN DE VERSIONES - SOLO ADMIN */}
+          <Route 
+            path="/admin/versions" 
+            element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
+                  <Layout>
+                    <VersionManagement />
                   </Layout>
                 </RoleBasedRoute>
               </ProtectedRoute>

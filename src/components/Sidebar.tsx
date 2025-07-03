@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, LogOut, Menu, X, FileText, Users, UserCircle, Inbox } from 'lucide-react';
+import { Building2, LogOut, Menu, X, FileText, Users, UserCircle, Inbox, Settings } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { UserRole } from '../services/authService';
@@ -115,6 +115,16 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
       });
     }
 
+     // Versiones del Sistema - SOLO ADMIN
+     if (user?.role === UserRole.ADMIN) {
+      items.push({
+        name: 'Versiones',
+        path: '/admin/versions',
+        icon: Settings,
+        description: 'Gestión de versiones del sistema'
+      });
+    }
+
     return items;
   };
 
@@ -188,7 +198,8 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', onToggle }) => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || 
-                           (item.path === '/admin/users' && location.pathname.startsWith('/admin/users'));
+                           (item.path === '/admin/users' && location.pathname.startsWith('/admin/users')) ||
+                           (item.path === '/admin/versions' && location.pathname.startsWith('/admin/versions'));
             
             return (
               <li key={item.path}>
