@@ -28,15 +28,23 @@ interface Radian {
 }
 
 interface RadianQuery {
-  documentNumber?: string;
-  documentType?: string;
-  sender?: string;
-  status?: string;
-  issueDateFrom?: string;
-  issueDateTo?: string;
-  page?: number;
-  perPage?: number;
+  identification_number?: string;
+  customer?: string;
+  customer_name?: string;
+  prefix?: string;
+  number?: string;
+  cufe?: string;
+  min_total?: number;
+  max_total?: number;
+  startDate?: string;
+  endDate?: string;
+  ambient_id?: number;
+  acu_recibo?: boolean;
+  rec_bienes?: boolean;
   aceptacion?: number;
+  rechazo?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 interface ApiResponse {
@@ -53,15 +61,14 @@ export const ReceivedDocumentsList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<RadianQuery>({
-    documentNumber: '',
-    documentType: '',
-    sender: '',
-    status: '',
-    issueDateFrom: '',
-    issueDateTo: '',
+    identification_number: '',
+    customer: '',
+    customer_name: '',
+    startDate: '',
+    endDate: '',
     page: 1,
-    perPage: 10,
-    aceptacion: undefined,
+    limit: 10,
+    aceptacion: undefined
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -82,26 +89,21 @@ export const ReceivedDocumentsList: React.FC = () => {
   useEffect(() => {
     loadRadianes();
     // eslint-disable-next-line
-  }, [filters.page, filters.perPage]);
+  }, [filters.page, filters.limit]);
 
   const loadRadianes = async () => {
     try {
       setLoading(true);
       setError(null);
-      const params: any = {
-        customer: user?.company_document,
-        documentType: filters.documentType,
-        identification_number: filters.sender,
-        status: filters.status,
-        issueDateFrom: filters.issueDateFrom,
+      const params: RadianQuery = {
+        customer: user?.role !== 'ADMIN' ? user?.company_document : '',
+        identification_number: filters.identification_number,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
         page: filters.page,
-        limit: filters.perPage,
+        limit: filters.limit,
+        aceptacion: filters.aceptacion
       };
-
-      // Solo agregar el parámetro aceptacion si está definido
-      if (filters.aceptacion !== undefined) {
-        params.aceptacion = filters.aceptacion;
-      }
 
       console.log('Cargando con parámetros:', params);
 
@@ -136,14 +138,14 @@ export const ReceivedDocumentsList: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({
-      documentNumber: '',
-      documentType: '',
-      sender: '',
-      status: '',
-      issueDateFrom: '',
+      identification_number: '',
+      customer: '',
+      customer_name: '',
+      startDate: '',
+      endDate: '',
       page: 1,
-      perPage: 10,
-      aceptacion: undefined,
+      limit: 10,
+      aceptacion: undefined
     });
   };
 
@@ -269,7 +271,7 @@ export const ReceivedDocumentsList: React.FC = () => {
 
   const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Math.min(500, Math.max(10, parseInt(e.target.value)));
-    setFilters(prev => ({ ...prev, perPage: value, page: 1 }));
+    setFilters(prev => ({ ...prev, limit: value, page: 1 }));
     loadRadianes();
   };
 
@@ -355,24 +357,35 @@ export const ReceivedDocumentsList: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Remitente */}
+              {/* NIT Vendedor */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Doc. Cliente</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">NIT Vendedor</label>
                 <input
                   type="text"
-                  value={filters.sender}
-                  onChange={(e) => handleFilterChange('sender', e.target.value)}
+                  value={filters.identification_number}
+                  onChange={(e) => handleFilterChange('identification_number', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
                   disabled={loading}
                 />
               </div>
-              {/* Fecha */}
+              {/* Fecha Desde */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
                 <input
                   type="date"
-                  value={filters.issueDateFrom}
-                  onChange={(e) => handleFilterChange('issueDateFrom', e.target.value)}
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+                  disabled={loading}
+                />
+              </div>
+              {/* Fecha Hasta */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
                   disabled={loading}
                 />
@@ -499,7 +512,7 @@ export const ReceivedDocumentsList: React.FC = () => {
             </label>
             <select
               id="perPage"
-              value={filters.perPage}
+              value={filters.limit}
               onChange={handlePerPageChange}
               className="rounded-md border-gray-300 text-sm focus:ring-soltec-primary focus:border-soltec-primary"
             >
