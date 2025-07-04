@@ -20,7 +20,7 @@ export interface Company {
   password?: string;
   allowSellerLogin: boolean;
   imapServer?: string | null;
-  imapPort?: number | null;
+  imapPort?: string | null;
   imapUser?: string | null;
   imapPassword?: string | null;
   imapEncryption?: string | null;
@@ -34,6 +34,13 @@ export interface Company {
   tokenDian?: string;
   usuarioDian?: string;
   userEmail?: string;
+  mailHost?: string;
+  mailPort?: string;
+  mailUsername?: string;
+  mailPassword?: string;
+  mailEncryption?: string;
+  mailFromAddress?: string;
+  mailFromName?: string;
 }
 
 export interface PaginationMeta {
