@@ -22,7 +22,8 @@ const SoftwareModal: React.FC<SoftwareModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<SoftwareFormData>({
     softwareId: '',
-    pin: 0
+    pin: 0,
+    type_software: 'invoice'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,7 @@ const SoftwareModal: React.FC<SoftwareModalProps> = ({
   // Verificar que la empresa tenga token
   const hasToken = !!company.tokenDian;
 
-  const handleInputChange = (field: keyof SoftwareFormData, value: string | number) => {
+  const handleInputChange = (field: keyof SoftwareFormData, value: string | number | 'invoice' | 'payroll') => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -66,7 +67,8 @@ const SoftwareModal: React.FC<SoftwareModalProps> = ({
       const createSoftwareData = {
         id: formData.softwareId.trim(),
         pin: formData.pin,
-        token: company.tokenDian!
+        token: company.tokenDian!,
+        type_software: formData.type_software
       };
 
       // Llamar al servicio
@@ -88,7 +90,8 @@ const SoftwareModal: React.FC<SoftwareModalProps> = ({
   const handleClose = () => {
     setFormData({
       softwareId: '',
-      pin: 0
+      pin: 0,
+      type_software: 'invoice'
     });
     setError(null);
     setLoading(false);
@@ -153,6 +156,35 @@ const SoftwareModal: React.FC<SoftwareModalProps> = ({
 
           {/* Formulario */}
           <div className="space-y-4">
+            {/* Toggle Switch para tipo de software */}
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-700">
+                Tipo de Software
+              </label>
+              <div className="flex items-center space-x-2">
+                <span className={`text-sm ${formData.type_software === 'invoice' ? 'text-blue-600' : 'text-gray-500'}`}>
+                  Facturación
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('type_software', formData.type_software === 'invoice' ? 'payroll' : 'invoice')}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    formData.type_software === 'payroll' ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                  disabled={loading || !hasToken}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      formData.type_software === 'payroll' ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm ${formData.type_software === 'payroll' ? 'text-blue-600' : 'text-gray-500'}`}>
+                  Nómina
+                </span>
+              </div>
+            </div>
+
             <Input
               label="ID del Software"
               placeholder="f46f2b97-dfce-4b0d-a0cb-2ebd67c72e6d"

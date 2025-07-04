@@ -19,6 +19,7 @@ export interface CreateSoftwareDto {
   id: string;
   pin: number;
   token: string;
+  type_software: 'invoice' | 'payroll';
 }
 
 // Respuesta del servicio de software
@@ -32,4 +33,5 @@ export interface SoftwareResponse {
 export interface SoftwareFormData {
   softwareId: string;
   pin: number;
+  type_software: 'invoice' | 'payroll';
 } 
