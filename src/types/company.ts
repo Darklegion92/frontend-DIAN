@@ -41,6 +41,8 @@ export interface Company {
   mailEncryption?: string;
   mailFromAddress?: string;
   mailFromName?: string;
+  tokenPassword?: string | null;
+  tokenEmpresa?: string | null;
 }
 
 export interface PaginationMeta {
