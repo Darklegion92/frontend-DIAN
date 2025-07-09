@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Building2, Save, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Building2, Save, ArrowLeft, AlertCircle, Copy, Check } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
 import LoadingSpinner from './LoadingSpinner';
@@ -36,6 +36,9 @@ interface CreateCompanyForm {
   imap_password: string | null;
   imap_port: string | null;
   imap_encryption: string | null;
+  // Campos de token
+  tokenPassword: string | null;
+  tokenEmpresa: string | null;
 }
 
 const TABS = [
@@ -52,6 +55,8 @@ const FIELD_TO_TAB_MAP: Record<keyof CreateCompanyForm, string> = {
   nit: 'basic',
   digito: 'basic',
   business_name: 'basic',
+  tokenPassword: 'basic',
+  tokenEmpresa: 'basic',
   
   // Pestaña tributaria
   type_document_identification_id: 'tax',
@@ -81,6 +86,66 @@ const FIELD_TO_TAB_MAP: Record<keyof CreateCompanyForm, string> = {
   imap_password: 'radianes',
   imap_port: 'radianes',
   imap_encryption: 'radianes'
+};
+
+// Función de utilidad para copiar al portapapeles
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    console.error('Error al copiar:', err);
+    return false;
+  }
+};
+
+// Componente para campo copiable
+interface CopyableFieldProps {
+  label: string;
+  value: string | null;
+  disabled?: boolean;
+}
+
+const CopyableField: React.FC<CopyableFieldProps> = ({ label, value, disabled }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (value && await copyToClipboard(value)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      <div className="flex">
+        <input
+          type="text"
+          value={value || ''}
+          readOnly
+          disabled={disabled}
+          className="block w-full px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-gray-500 sm:text-sm"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={disabled}
+            className="px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-soltec-primary disabled:opacity-50"
+          >
+            {copied ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4 text-gray-400" />
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const CreateCompany: React.FC = () => {
@@ -120,6 +185,9 @@ const CreateCompany: React.FC = () => {
     imap_password: null,
     imap_port: null,
     imap_encryption: null,
+    // Inicializar campos de token
+    tokenPassword: null,
+    tokenEmpresa: null,
   });
 
   // Estados para los catálogos
@@ -191,6 +259,9 @@ const CreateCompany: React.FC = () => {
           imap_password: company.imapPassword || null,
           imap_port: company.imapPort?.toString() || null,
           imap_encryption: company.imapEncryption || null,
+          // Datos de token
+          tokenPassword: company.tokenPassword || null,
+          tokenEmpresa: company.tokenEmpresa || null,
         };
         
         setFormData(newFormData);
@@ -243,6 +314,9 @@ const CreateCompany: React.FC = () => {
       requiredFields.splice(requiredFields.indexOf('imap_password'), 1);
       requiredFields.splice(requiredFields.indexOf('imap_port'), 1);
       requiredFields.splice(requiredFields.indexOf('imap_encryption'), 1);
+      // Eliminar campos de token que son opcionales
+      requiredFields.splice(requiredFields.indexOf('tokenPassword'), 1);
+      requiredFields.splice(requiredFields.indexOf('tokenEmpresa'), 1);
 
       const emptyFields = requiredFields.filter(field => formData[field] === '' || formData[field] === null);
       
@@ -257,8 +331,11 @@ const CreateCompany: React.FC = () => {
         throw new Error(`Por favor complete todos los campos obligatorios en la pestaña "${TABS.find(tab => tab.id === tabWithError)?.label}"`);
       }
 
+      // Crear una copia de los datos del formulario excluyendo los campos de token
+      const { tokenPassword, tokenEmpresa, ...dataToSend } = formData;
+
       // Usar el método correcto según el modo
-      await companyService.createCompany(formData as any);
+      await companyService.createCompany(dataToSend as any);
       
       // Redirigir a la lista con mensaje de éxito
       navigate('/companies', { 
@@ -316,6 +393,22 @@ const CreateCompany: React.FC = () => {
             required
             disabled={loading}
             {...{ name: "business_name", maxLength: 255 }}
+          />
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-1">
+          <CopyableField
+            label="Token Password"
+            value={formData.tokenPassword}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-1">
+          <CopyableField
+            label="Token Empresa"
+            value={formData.tokenEmpresa}
+            disabled={loading}
           />
         </div>
       </div>
