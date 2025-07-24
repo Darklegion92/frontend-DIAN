@@ -55,11 +55,6 @@ const DocumentList: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Cargar documentos cuando cambian los filtros
-  useEffect(() => {
-    loadDocuments();
-  }, [filters.page, filters.identification_number]);
-
   // Cargar documentos inicialmente después de cargar tipos
   useEffect(() => {
     if (typeDocuments.length > 0) {

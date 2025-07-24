@@ -145,6 +145,21 @@ class CompanyService {
       throw new Error('Error al actualizar el ambiente de la empresa. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Subir logo de la compañía
+   */
+  async uploadCompanyLogo(companyId: number, iconBase64: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await apiClient.post(`/companies/${companyId}/icon`, { iconBase64 });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al subir el logo de la empresa. Verifique su conexión a internet.');
+    }
+  }
 }
 
 // Exportar instancia única del servicio

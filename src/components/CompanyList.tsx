@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
@@ -56,6 +56,13 @@ const CompanyList: React.FC = () => {
     isOpen: false,
     company: null
   });
+
+  // Estado para loading de subida de logo
+  const [uploadingLogoId, setUploadingLogoId] = useState<number | null>(null);
+  // Cambia el estado de logoError a un objeto por empresa:
+  const [logoError, setLogoError] = useState<{ [companyId: number]: string }>({});
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
 
   // Cargar empresas
   const loadCompanies = async (params?: PaginationQuery) => {
@@ -245,6 +252,43 @@ const CompanyList: React.FC = () => {
     });
   };
 
+  // Función para manejar click en botón de subir logo
+  const handleUploadLogoClick = (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    fileInputRef.current?.click();
+  };
+
+  // Función para manejar selección de archivo
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedCompanyId) return;
+    setUploadingLogoId(selectedCompanyId);
+    setLogoError((prev) => ({ ...prev, [selectedCompanyId]: '' }));
+    try {
+      // Convertir a base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      // Solo el string base64 (sin el prefijo data:image...)
+      // const base64Data = base64.split(',')[1];
+      await companyService.uploadCompanyLogo(selectedCompanyId, base64);
+      await loadCompanies();
+    } catch (err: any) {
+      setLogoError((prev) => ({ ...prev, [selectedCompanyId]: err.message || 'Error al subir el logo' }));
+      // Limpiar error automáticamente después de 4 segundos
+      setTimeout(() => {
+        setLogoError((prev) => ({ ...prev, [selectedCompanyId]: '' }));
+      }, 4000);
+    } finally {
+      setUploadingLogoId(null);
+      setSelectedCompanyId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   // Formatear fecha
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES');
@@ -368,6 +412,15 @@ const CompanyList: React.FC = () => {
                 >
                   <ArrowUpCircle className="h-4 w-4 mr-3 text-emerald-500" />
                   Pasar a Producción
+                </button>
+
+                {/* Botón para subir logo */}
+                <button
+                  onClick={() => { closeDropdown(); handleUploadLogoClick(company.id); }}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                >
+                  <Upload className="h-4 w-4 mr-3 text-indigo-500" />
+                  Subir Logo
                 </button>
               </div>
             </div>
@@ -625,6 +678,17 @@ const CompanyList: React.FC = () => {
                             <ArrowUpCircle className="h-3 w-3 mr-1" />
                             Prod.
                           </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUploadLogoClick(company.id)}
+                            className="text-xs px-2 py-1 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200"
+                            disabled={uploadingLogoId === company.id}
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            {uploadingLogoId === company.id ? 'Subiendo...' : 'Logo'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -718,6 +782,21 @@ const CompanyList: React.FC = () => {
         company={softwareModal.company}
         onSuccess={handleSoftwareSuccess}
       />
+
+      {/* Input file oculto global */}
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleLogoFileChange}
+      />
+      {/* Mostrar error de logo si existe */}
+      {logoError[selectedCompanyId || 0] && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-2 mt-1">
+          <p className="text-red-800 text-xs">{logoError[selectedCompanyId || 0]}</p>
+        </div>
+      )}
     </div>
   );
 };
