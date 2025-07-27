@@ -336,7 +336,7 @@ const CompanyList: React.FC = () => {
                     {company.identificationNumber}-{company.dv}
                   </p>
                   <p className="text-xs text-gray-500">
-                    ID: {company.id}
+                   {company.usuarioDian}
                   </p>
                 </div>
 
@@ -551,7 +551,7 @@ const CompanyList: React.FC = () => {
                       <td className="px-3 sm:px-4 py-3">
                         <div>
                           <p className="text-xs sm:text-sm text-gray-500">
-                            ID: {company.id}
+                            {company.usuarioDian}
                           </p>
                           <p className="font-medium text-sm sm:text-base text-gray-900">
                             {company.identificationNumber}-{company.dv}
