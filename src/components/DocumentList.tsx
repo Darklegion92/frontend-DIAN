@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check, Mail } from 'lucide-react';
+import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check, Mail, Download } from 'lucide-react';
 import { Document, DocumentQuery, DocumentPaginationMeta } from '../types/document';
 import { TypeDocumentOption, typeDocumentService } from '../services/typeDocumentService';
 import { documentService } from '../services/documentService';
@@ -71,6 +71,14 @@ const DocumentList: React.FC = () => {
     }
   }, [typeDocuments]);
 
+  // Cargar documentos cuando cambien los filtros (incluyendo paginación)
+  useEffect(() => {
+    if (typeDocuments.length > 0) {
+      console.log('🔄 Filtros actualizados, recargando documentos:', filters);
+      loadDocuments();
+    }
+  }, [filters, typeDocuments.length > 0]);
+
   const loadTypeDocuments = async () => {
     try {
       const types = await typeDocumentService.getActiveTypeDocuments();
@@ -86,10 +94,14 @@ const DocumentList: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      console.log('📡 Enviando petición con filtros:', filters);
       const result = await documentService.getDocuments(filters);
+      console.log('📋 Respuesta recibida:', result);
+      
       setPagination(result);
       setDocuments(result.documents || []);
     } catch (err: any) {
+      console.error('❌ Error al cargar documentos:', err);
       setError(err.message || 'Error al cargar los documentos');
       setDocuments([]);
     } finally {
@@ -126,6 +138,7 @@ const DocumentList: React.FC = () => {
   };
 
   const handlePageChange = (newPage: number) => {
+    console.log('📄 Cambiando a página:', newPage);
     setFilters(prev => ({ ...prev, page: newPage }));
   };
 
@@ -183,6 +196,18 @@ const DocumentList: React.FC = () => {
     setEmailError(null);
     setEmailSuccess(null);
     setShowEmailModal(true);
+  };
+
+  const handleDownloadPDF = async (number: string, prefix: string) => {
+    const response = await documentService.downloadPDF(number, prefix);
+
+    if (response.success) {
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    }else{
+      setError(response.message);
+    }
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -522,6 +547,14 @@ const DocumentList: React.FC = () => {
                             title={`Enviar documento ${document.prefix}${document.number} por email`}
                           >
                             <Mail className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDownloadPDF(document.number, document.prefix)}
+                            className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
+                            title={`Descargar documento ${document.prefix}${document.number} PDF`}
+                          >
+                            <Download className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                           </button>
                         </div>
                       </td>

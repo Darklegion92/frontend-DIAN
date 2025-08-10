@@ -47,13 +47,17 @@ class DocumentService {
    */
   async getDocuments(params: DocumentQuery = {}): Promise<DocumentPaginationMeta> {
     try {
-      // Filtrar parámetros vacíos
+      // Filtrar parámetros vacíos pero mantener page y per_page
       const queryParams = Object.fromEntries(
-        Object.entries(params).filter(([_, value]) => 
-          value !== undefined && value !== null && value !== ''
-        )
+        Object.entries(params).filter(([key, value]) => {
+          if (key === 'page' || key === 'per_page') {
+            return value !== undefined && value !== null;
+          }
+          return value !== undefined && value !== null && value !== '';
+        })
       );
 
+      console.log('🔍 Parámetros de consulta:', queryParams);
       const response = await apiClient.get('/documents', { params: queryParams });
       
       // La respuesta viene envuelta en { success, message, data: { current_page, documents: [...], ... } }
@@ -111,7 +115,18 @@ class DocumentService {
       throw new Error('Error al enviar el documento por email. Verifique su conexión a internet.');
     }
   }
+
+  async downloadPDF(number: string, prefix: string): Promise<any> {
+    try {
+      const response = await apiClient.get(`/documents/download-pdf?number=${number}&prefix=${prefix}`);
+      return response.data;
+    } catch (error: any) {
+      return Error('Error al descargar el documento PDF. Verifique su conexión a internet.');
+    }
+  }
 }
+
+    
 
 // Exportar instancia única del servicio
 export const documentService = new DocumentService();
