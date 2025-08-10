@@ -66,7 +66,6 @@ const DocumentList: React.FC = () => {
   // Cargar documentos inicialmente después de cargar tipos
   useEffect(() => {
     if (typeDocuments.length > 0) {
-      console.log('✅ Tipos cargados, recargando documentos para actualizar etiquetas');
       loadDocuments();
     }
   }, [typeDocuments]);
@@ -74,7 +73,6 @@ const DocumentList: React.FC = () => {
   // Cargar documentos cuando cambien los filtros (incluyendo paginación)
   useEffect(() => {
     if (typeDocuments.length > 0) {
-      console.log('🔄 Filtros actualizados, recargando documentos:', filters);
       loadDocuments();
     }
   }, [filters, typeDocuments.length > 0]);
@@ -82,7 +80,6 @@ const DocumentList: React.FC = () => {
   const loadTypeDocuments = async () => {
     try {
       const types = await typeDocumentService.getActiveTypeDocuments();
-      console.log('🏷️ Tipos de documentos cargados:', types);
       setTypeDocuments(types);
     } catch (err) {
       console.error('Error loading type documents:', err);
@@ -94,9 +91,7 @@ const DocumentList: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('📡 Enviando petición con filtros:', filters);
       const result = await documentService.getDocuments(filters);
-      console.log('📋 Respuesta recibida:', result);
       
       setPagination(result);
       setDocuments(result.documents || []);
@@ -138,7 +133,6 @@ const DocumentList: React.FC = () => {
   };
 
   const handlePageChange = (newPage: number) => {
-    console.log('📄 Cambiando a página:', newPage);
     setFilters(prev => ({ ...prev, page: newPage }));
   };
 
@@ -155,12 +149,10 @@ const DocumentList: React.FC = () => {
   };
 
   const getDocumentTypeLabel = (typeId: number) => {
-    console.log('🔍 Buscando tipo:', typeId, 'en lista:', typeDocuments);
     
     // Buscar en la lista cargada desde el API
     const type = typeDocuments.find(t => t.id === typeId);
     if (type?.name) {
-      console.log('🏷️ Tipo encontrado en API:', type.name);
       return type.name;
     }
     
@@ -174,7 +166,6 @@ const DocumentList: React.FC = () => {
     };
     
     const fallbackLabel = commonTypes[typeId] || `Tipo ${typeId}`;
-    console.log('🏷️ Usando fallback:', fallbackLabel);
     return fallbackLabel;
   };
 
