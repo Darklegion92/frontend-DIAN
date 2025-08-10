@@ -118,7 +118,9 @@ class DocumentService {
 
   async downloadPDF(number: string, prefix: string): Promise<any> {
     try {
-      const response = await apiClient.get(`/documents/download-pdf?number=${number}&prefix=${prefix}`);
+      const response = await apiClient.get(`/documents/download-pdf?number=${number}&prefix=${prefix}`, {
+        responseType: 'blob'
+      });
       return response?.data;
     } catch (error: any) {
       return Error('Error al descargar el documento PDF. Verifique su conexión a internet.');

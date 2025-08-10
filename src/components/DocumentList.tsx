@@ -190,14 +190,25 @@ const DocumentList: React.FC = () => {
   };
 
   const handleDownloadPDF = async (number: string, prefix: string) => {
-    const response = await documentService.downloadPDF(number, prefix);
-    if (response.success) {
-    console.log(response.data);
-    const blob = await response.data.data.blob();
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    }else{
-      setError(response.message);
+    try {
+      const response = await documentService.downloadPDF(number, prefix);
+      if (response instanceof Error) {
+        setError(response.message);
+        return;
+      }
+      
+      // Ahora response es directamente un Blob
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `documento_${prefix}_${number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar PDF:', error);
+      setError('Error al descargar el documento PDF');
     }
   };
 
