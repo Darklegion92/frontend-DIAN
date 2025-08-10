@@ -116,9 +116,9 @@ class DocumentService {
     }
   }
 
-  async downloadPDF(number: string, prefix: string): Promise<Blob> {
+  async downloadPDF(number: string, prefix: string, company_document: string): Promise<Blob> {
     try {
-      const response = await apiClient.get(`/documents/download-pdf?number=${number}&prefix=${prefix}`, {
+      const response = await apiClient.get(`/documents/download-pdf?number=${number}&prefix=${prefix}&company_document=${company_document}`, {
         responseType: 'blob'
       });
       return response.data;

@@ -189,9 +189,9 @@ const DocumentList: React.FC = () => {
     setShowEmailModal(true);
   };
 
-  const handleDownloadPDF = async (number: string, prefix: string) => {
+  const handleDownloadPDF = async (number: string, prefix: string, company_document: string) => {
     try {
-      const blob = await documentService.downloadPDF(number, prefix);
+      const blob = await documentService.downloadPDF(number, prefix, company_document);
       
       // Crear URL del blob y descargar
       const url = window.URL.createObjectURL(blob);
@@ -548,7 +548,7 @@ const DocumentList: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleDownloadPDF(document.number, document.prefix)}
+                            onClick={() => handleDownloadPDF(document.number, document.prefix, document.identificationNumber)}
                             className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
                             title={`Descargar documento ${document.prefix}${document.number} PDF`}
                           >
