@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check } from 'lucide-react';
+import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check, Mail } from 'lucide-react';
 import { Document, DocumentQuery, DocumentPaginationMeta } from '../types/document';
 import { TypeDocumentOption, typeDocumentService } from '../services/typeDocumentService';
 import { documentService } from '../services/documentService';
@@ -17,6 +17,14 @@ const DocumentList: React.FC = () => {
   const [typeDocuments, setTypeDocuments] = useState<TypeDocumentOption[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [copiedCufe, setCopiedCufe] = useState<string | null>(null);
+  
+  // Estados para el modal de email
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [emailData, setEmailData] = useState<{number: string, prefix: string} | null>(null);
+  const [emailAddress, setEmailAddress] = useState('');
   
   // Estados de paginación
   const [pagination, setPagination] = useState<DocumentPaginationMeta>({
@@ -167,6 +175,64 @@ const DocumentList: React.FC = () => {
     } catch (err) {
       console.error('Error al copiar CUFE:', err);
     }
+  };
+
+  const handleSendToEmail = async (number: string, prefix: string) => {
+    setEmailData({ number, prefix });
+    setEmailAddress('');
+    setEmailError(null);
+    setEmailSuccess(null);
+    setShowEmailModal(true);
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!emailData || !emailAddress.trim()) {
+      setEmailError('Por favor ingrese un correo electrónico válido');
+      return;
+    }
+
+    // Validación más robusta de email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailAddress.trim())) {
+      setEmailError('Por favor ingrese un correo electrónico válido');
+      return;
+    }
+
+    try {
+      setEmailLoading(true);
+      setEmailError(null);
+      setEmailSuccess(null);
+
+      const response = await documentService.sendEmail(
+        emailData.number,
+        emailData.prefix,
+        emailAddress.trim()
+      );
+
+      if (response.codigo === 200) {
+        setEmailSuccess(`Documento ${emailData.prefix}${emailData.number} enviado correctamente a ${emailAddress.trim()}`);
+        setTimeout(() => {
+          setShowEmailModal(false);
+          setEmailSuccess(null);
+        }, 3000);
+      } else {
+        setEmailError(response.mensaje || 'Error al enviar el documento');
+      }
+    } catch (err: any) {
+      setEmailError(err.message || 'Error al enviar el documento por email');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const closeEmailModal = () => {
+    setShowEmailModal(false);
+    setEmailData(null);
+    setEmailAddress('');
+    setEmailError(null);
+    setEmailSuccess(null);
   };
 
   // Mostrar loading
@@ -378,7 +444,7 @@ const DocumentList: React.FC = () => {
                       Fecha
                     </th>
                     <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase min-w-[200px]">
-                      CUFE
+                      OPCIONES
                     </th>
                   </tr>
                 </thead>
@@ -439,9 +505,6 @@ const DocumentList: React.FC = () => {
                       </td>
                       <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-mono text-gray-600 break-all flex-1">
-                            {document.cufe}
-                          </span>
                           <button
                             onClick={() => handleCopyCufe(document.cufe)}
                             className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
@@ -452,6 +515,13 @@ const DocumentList: React.FC = () => {
                             ) : (
                               <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                             )}
+                          </button>
+                          <button
+                            onClick={() => handleSendToEmail(document.number, document.prefix)}
+                            className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
+                            title={`Enviar documento ${document.prefix}${document.number} por email`}
+                          >
+                            <Mail className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                           </button>
                         </div>
                       </td>
@@ -525,6 +595,91 @@ const DocumentList: React.FC = () => {
           </div>
         ) : null}
       </div>
+
+      {/* Modal de envío de email */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+          <div className="relative p-8 w-full max-w-md max-h-full">
+            <div className="relative bg-white rounded-lg shadow">
+              <div className="flex justify-between items-start p-4 rounded-t border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Enviar Documento por Email
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                  onClick={closeEmailModal}
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 font-medium mb-2">
+                    Documento a enviar:
+                  </p>
+                  <p className="text-lg font-bold text-blue-900">
+                    {emailData?.prefix}{emailData?.number}
+                  </p>
+                </div>
+                <p className="text-base leading-relaxed text-gray-500">
+                  Ingresa el correo electrónico al cual deseas enviar el documento.
+                </p>
+                <form onSubmit={handleEmailSubmit}>
+                  <div className="grid gap-4">
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        Correo Electrónico
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={emailAddress}
+                        onChange={(e) => setEmailAddress(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
+                        placeholder="ejemplo@ejemplo.com"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    {emailError && (
+                      <p className="text-red-500 text-sm">{emailError}</p>
+                    )}
+                    {emailSuccess && (
+                      <p className="text-green-600 text-sm">{emailSuccess}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center p-6 space-x-2 rounded-b border-t border-gray-200">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="md"
+                      disabled={emailLoading}
+                      className="w-full sm:w-auto"
+                    >
+                      {emailLoading ? <LoadingSpinner size="sm" color="white" /> : (
+                        <>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Enviar
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="md"
+                      onClick={closeEmailModal}
+                      className="w-full sm:w-auto"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

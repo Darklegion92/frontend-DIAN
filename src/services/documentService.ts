@@ -91,6 +91,26 @@ class DocumentService {
       throw new Error('Error al obtener los documentos. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Enviar documento por email
+   */
+  async sendEmail(number: string, prefix: string, correo: string): Promise<any> {
+    try {
+      const response = await apiClient.post('/documents/send-email', {
+        number,
+        prefix,
+        correo
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Error al enviar el documento por email. Verifique su conexión a internet.');
+    }
+  }
 }
 
 // Exportar instancia única del servicio
