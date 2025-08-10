@@ -191,10 +191,9 @@ const DocumentList: React.FC = () => {
 
   const handleDownloadPDF = async (number: string, prefix: string) => {
     const response = await documentService.downloadPDF(number, prefix);
-    console.log(response);
     if (response.success) {
     console.log(response.data);
-    const blob = await response.data.blob();
+    const blob = await response.data.data.blob();
     const url = window.URL.createObjectURL(blob);
     window.open(url, '_blank');
     }else{
