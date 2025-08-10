@@ -191,14 +191,10 @@ const DocumentList: React.FC = () => {
 
   const handleDownloadPDF = async (number: string, prefix: string) => {
     try {
-      const response = await documentService.downloadPDF(number, prefix);
-      if (response instanceof Error) {
-        setError(response.message);
-        return;
-      }
+      const blob = await documentService.downloadPDF(number, prefix);
       
-      // Ahora response es directamente un Blob
-      const url = window.URL.createObjectURL(response);
+      // Crear URL del blob y descargar
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `documento_${prefix}_${number}.pdf`;
