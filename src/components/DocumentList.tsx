@@ -23,7 +23,7 @@ const DocumentList: React.FC = () => {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
-  const [emailData, setEmailData] = useState<{number: string, prefix: string} | null>(null);
+  const [emailData, setEmailData] = useState<{number: string, prefix: string, company_document: string} | null>(null);
   const [emailAddress, setEmailAddress] = useState('');
   
   // Estados de paginación
@@ -181,8 +181,8 @@ const DocumentList: React.FC = () => {
     }
   };
 
-  const handleSendToEmail = async (number: string, prefix: string) => {
-    setEmailData({ number, prefix });
+  const handleSendToEmail = async (number: string, prefix: string, company_document: string) => {
+    setEmailData({ number, prefix, company_document });
     setEmailAddress('');
     setEmailError(null);
     setEmailSuccess(null);
@@ -231,7 +231,8 @@ const DocumentList: React.FC = () => {
       const response = await documentService.sendEmail(
         emailData.number,
         emailData.prefix,
-        emailAddress.trim()
+        emailAddress.trim(),
+        emailData.company_document
       );
 
       if (response.codigo === 200) {
@@ -540,7 +541,7 @@ const DocumentList: React.FC = () => {
                             )}
                           </button>
                           <button
-                            onClick={() => handleSendToEmail(document.number, document.prefix)}
+                            onClick={() => handleSendToEmail(document.number, document.prefix, document.identificationNumber)}
                             className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
                             title={`Enviar documento ${document.prefix}${document.number} por email`}
                           >
