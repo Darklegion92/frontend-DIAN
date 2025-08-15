@@ -99,12 +99,13 @@ class DocumentService {
   /**
    * Enviar documento por email
    */
-  async sendEmail(number: string, prefix: string, correo: string): Promise<any> {
+  async sendEmail(number: string, prefix: string, correo: string, document_company:string): Promise<any> {
     try {
       const response = await apiClient.post('/documents/send-email', {
         number,
         prefix,
-        correo
+        correo,
+        document_company
       });
       
       return response.data;
