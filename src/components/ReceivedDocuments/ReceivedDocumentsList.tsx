@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Inbox, Filter, X, Search, Calendar, User, Hash, Check, XCircle } from 'lucide-react';
+import { Inbox, Filter, X, Search, Calendar, User, Hash, Check, XCircle, ExternalLink } from 'lucide-react';
 import api from '../../config/api';
 import LoadingSpinner from '../LoadingSpinner';
 import Button from '../Button';
@@ -269,6 +269,11 @@ export const ReceivedDocumentsList: React.FC = () => {
     }
   };
 
+  const handleGoToDIAN = (cufe: string) => {
+    const dianUrl = `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${cufe}`;
+    window.open(dianUrl, '_blank');
+  };
+
   const handlePerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Math.min(500, Math.max(10, parseInt(e.target.value)));
     setFilters(prev => ({ ...prev, limit: value, page: 1 }));
@@ -481,17 +486,31 @@ export const ReceivedDocumentsList: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
-                          {canAccept && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRejectItem(doc.id)}
-                              disabled={processingAction || doc.aceptacion || doc.rechazo || doc.state_document_id === 0}
-                              className={`text-red-600 hover:text-red-700 ${(doc.aceptacion || doc.rechazo || doc.state_document_id === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <div className="flex space-x-2">
+                            <div title="Ver en DIAN">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleGoToDIAN(doc.cufe)}
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {canAccept && (
+                              <div title="Rechazar documento">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRejectItem(doc.id)}
+                                  disabled={processingAction || doc.aceptacion || doc.rechazo || doc.state_document_id === 0}
+                                  className={`text-red-600 hover:text-red-700 ${(doc.aceptacion || doc.rechazo || doc.state_document_id === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
