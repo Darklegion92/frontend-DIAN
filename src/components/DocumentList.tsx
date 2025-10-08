@@ -70,12 +70,12 @@ const DocumentList: React.FC = () => {
     }
   }, [typeDocuments]);
 
-  // Cargar documentos cuando cambien los filtros (incluyendo paginación)
+  // Cargar documentos solo cuando cambien la paginación
   useEffect(() => {
     if (typeDocuments.length > 0) {
       loadDocuments();
     }
-  }, [filters, typeDocuments.length > 0]);
+  }, [filters.page, filters.per_page, typeDocuments.length > 0]);
 
   const loadTypeDocuments = async () => {
     try {
