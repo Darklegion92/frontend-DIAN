@@ -83,6 +83,10 @@ export const ReceivedDocumentsList: React.FC = () => {
   const [fetchEndDate, setFetchEndDate] = useState('');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [processingAction, setProcessingAction] = useState(false);
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvProcessing, setCsvProcessing] = useState(false);
+  const [csvResults, setCsvResults] = useState<{success: number, errors: string[]} | null>(null);
 
   const { user } = useAuth();
 
@@ -280,6 +284,94 @@ export const ReceivedDocumentsList: React.FC = () => {
     loadRadianes();
   };
 
+  // Función para procesar archivo CSV y extraer datos de una columna
+  const processCsvFile = (file: File): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csvText = e.target?.result as string;
+          const lines = csvText.split('\n');
+          const dataArray: string[] = [];
+          
+          // Procesar cada línea del CSV
+          lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine) {
+              // Dividir por comas y tomar el primer elemento (primera columna)
+              const columns = trimmedLine.split(',');
+              const firstColumn = columns[0]?.trim();
+              
+              if (firstColumn && firstColumn.length > 10 && /^[A-Za-z0-9]+$/.test(firstColumn)) {
+                dataArray.push(firstColumn);
+              }
+            }
+          });
+          
+          resolve(dataArray);
+        } catch (error) {
+          reject(new Error('Error al procesar el archivo CSV: ' + error));
+        }
+      };
+      reader.onerror = () => reject(new Error('Error al leer el archivo'));
+      reader.readAsText(file);
+    });
+  };
+
+  // Función para manejar la carga del archivo CSV
+  const handleCsvFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCsvFile(file);
+    }
+  };
+
+  // Función para procesar CUFEs del CSV y ejecutar aceptación
+  const handleProcessCsvFile = async () => {
+    if (!csvFile) return;
+    
+    setCsvProcessing(true);
+    setCsvResults(null);
+    
+    try {
+      const cufes = await processCsvFile(csvFile);
+      
+      if (cufes.length === 0) {
+        setCsvResults({
+          success: 0,
+          errors: ['No se encontraron CUFEs válidos en el archivo CSV']
+        });
+        return;
+      }
+
+      // Ejecutar el mismo proceso que handleAcceptSelected pero con los CUFEs del CSV
+      await api.post('/received-documents/send-event', cufes);
+      
+      setCsvResults({
+        success: cufes.length,
+        errors: []
+      });
+      
+      setFetchEmailsMsg(`${cufes.length} documentos procesados correctamente desde el archivo CSV.`);
+      await loadRadianes();
+      
+    } catch (err: any) {
+      setCsvResults({
+        success: 0,
+        errors: [err.response?.data?.message || 'Error al procesar el archivo CSV']
+      });
+    } finally {
+      setCsvProcessing(false);
+    }
+  };
+
+  // Función para abrir el modal de carga CSV
+  const openCsvModal = () => {
+    setCsvFile(null);
+    setCsvResults(null);
+    setShowCsvModal(true);
+  };
+
   // Render loading
   if (loading && radianes.length === 0) {
     return (
@@ -314,6 +406,15 @@ export const ReceivedDocumentsList: React.FC = () => {
           >
             <Inbox className="h-4 w-4 mr-2 flex-shrink-0" />
             Consultar Correos
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={openCsvModal}
+            disabled={csvProcessing}
+            className="flex items-center"
+          >
+            <Hash className="h-4 w-4 mr-2 flex-shrink-0" />
+            Cargar CSV
           </Button>
           <Button
             variant="outline"
@@ -625,6 +726,93 @@ export const ReceivedDocumentsList: React.FC = () => {
                   <>
                     <Inbox className="h-4 w-4 mr-2" />
                     Consultar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Cargar CSV */}
+      {showCsvModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Cargar Archivo CSV</h3>
+              <button
+                onClick={() => setShowCsvModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleccionar archivo CSV
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleCsvFileChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+                  disabled={csvProcessing}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  El archivo debe contener CUFEs en la primera columna
+                </p>
+              </div>
+              
+              {csvFile && (
+                <div className="bg-blue-50 p-3 rounded-md">
+                  <p className="text-sm text-blue-700">
+                    <strong>Archivo seleccionado:</strong> {csvFile.name}
+                  </p>
+                </div>
+              )}
+
+              {csvResults && (
+                <div className={`p-3 rounded-md ${csvResults.success > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className={`text-sm font-medium ${csvResults.success > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {csvResults.success > 0 
+                      ? `✅ ${csvResults.success} documentos procesados correctamente`
+                      : '❌ Error al procesar el archivo'
+                    }
+                  </p>
+                  {csvResults.errors.length > 0 && (
+                    <ul className="mt-2 text-xs text-red-600">
+                      {csvResults.errors.map((error, index) => (
+                        <li key={index}>• {error}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowCsvModal(false)}
+                disabled={csvProcessing}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleProcessCsvFile}
+                disabled={csvProcessing || !csvFile}
+                className="flex items-center"
+              >
+                {csvProcessing ? (
+                  <>
+                    <LoadingSpinner size="sm" color="white" className="mr-2" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Hash className="h-4 w-4 mr-2" />
+                    Procesar CSV
                   </>
                 )}
               </Button>
