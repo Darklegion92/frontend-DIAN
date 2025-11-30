@@ -306,6 +306,19 @@ const CompanyList: React.FC = () => {
     }
   };
 
+  // Función para convertir blob a base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   // Función para manejar click en botón de ver logo
   const handleViewLogoClick = async (company: Company) => {
     setLogoModal({
@@ -332,11 +345,11 @@ const CompanyList: React.FC = () => {
           return;
         }
 
-        // Crear URL del blob para mostrar la imagen
-        const imageUrl = URL.createObjectURL(logoBlob);
+        // Convertir blob a base64 para evitar problemas con CSP
+        const base64Url = await blobToBase64(logoBlob);
         setLogoModal(prev => ({
           ...prev,
-          logoUrl: imageUrl,
+          logoUrl: base64Url,
           loading: false
         }));
       } else {
@@ -359,10 +372,7 @@ const CompanyList: React.FC = () => {
 
   // Cerrar modal de logo
   const handleLogoModalClose = () => {
-    // Liberar la URL del blob para evitar memory leaks
-    if (logoModal.logoUrl) {
-      URL.revokeObjectURL(logoModal.logoUrl);
-    }
+    // No necesitamos liberar nada porque usamos base64 en lugar de blob URLs
     setLogoModal({
       isOpen: false,
       companyId: null,
