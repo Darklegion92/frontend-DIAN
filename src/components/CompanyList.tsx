@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload, Image, X } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
 import LoadingSpinner from './LoadingSpinner';
@@ -63,6 +63,23 @@ const CompanyList: React.FC = () => {
   const [logoError, setLogoError] = useState<{ [companyId: number]: string }>({});
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+
+  // Estado del modal de logo
+  const [logoModal, setLogoModal] = useState<{
+    isOpen: boolean;
+    companyId: number | null;
+    companyName: string;
+    logoUrl: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({
+    isOpen: false,
+    companyId: null,
+    companyName: '',
+    logoUrl: null,
+    loading: false,
+    error: null
+  });
 
   // Cargar empresas
   const loadCompanies = async (params?: PaginationQuery) => {
@@ -289,6 +306,73 @@ const CompanyList: React.FC = () => {
     }
   };
 
+  // Función para manejar click en botón de ver logo
+  const handleViewLogoClick = async (company: Company) => {
+    setLogoModal({
+      isOpen: true,
+      companyId: company.id,
+      companyName: `${company.identificationNumber}-${company.dv}`,
+      logoUrl: null,
+      loading: true,
+      error: null
+    });
+
+    try {
+      const logoBlob = await companyService.getCompanyLogo(company.id);
+      
+      if (logoBlob) {
+        // Validar que sea una imagen JPG
+        if (logoBlob.type !== 'image/jpeg' && logoBlob.type !== 'image/jpg') {
+          setLogoModal(prev => ({
+            ...prev,
+            logoUrl: null,
+            loading: false,
+            error: 'Cliente sin imagen'
+          }));
+          return;
+        }
+
+        // Crear URL del blob para mostrar la imagen
+        const imageUrl = URL.createObjectURL(logoBlob);
+        setLogoModal(prev => ({
+          ...prev,
+          logoUrl: imageUrl,
+          loading: false
+        }));
+      } else {
+        setLogoModal(prev => ({
+          ...prev,
+          logoUrl: null,
+          loading: false,
+          error: 'Cliente sin imagen'
+        }));
+      }
+    } catch (err: any) {
+      setLogoModal(prev => ({
+        ...prev,
+        logoUrl: null,
+        loading: false,
+        error: 'Cliente sin imagen'
+      }));
+    }
+  };
+
+  // Cerrar modal de logo
+  const handleLogoModalClose = () => {
+    // Liberar la URL del blob para evitar memory leaks
+    if (logoModal.logoUrl) {
+      URL.revokeObjectURL(logoModal.logoUrl);
+    }
+    setLogoModal({
+      isOpen: false,
+      companyId: null,
+      companyName: '',
+      logoUrl: null,
+      loading: false,
+      error: null
+    });
+  };
+
   // Formatear fecha
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES');
@@ -421,6 +505,15 @@ const CompanyList: React.FC = () => {
                 >
                   <Upload className="h-4 w-4 mr-3 text-indigo-500" />
                   Subir Logo
+                </button>
+
+                {/* Botón para ver logo */}
+                <button
+                  onClick={() => { closeDropdown(); handleViewLogoClick(company); }}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                >
+                  <Image className="h-4 w-4 mr-3 text-blue-500" />
+                  Ver Logo
                 </button>
               </div>
             </div>
@@ -689,6 +782,16 @@ const CompanyList: React.FC = () => {
                             <Upload className="h-3 w-3 mr-1" />
                             {uploadingLogoId === company.id ? 'Subiendo...' : 'Logo'}
                           </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewLogoClick(company)}
+                            className="text-xs px-2 py-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                          >
+                            <Image className="h-3 w-3 mr-1" />
+                            Ver Logo
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -795,6 +898,64 @@ const CompanyList: React.FC = () => {
       {logoError[selectedCompanyId || 0] && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-2 mt-1">
           <p className="text-red-800 text-xs">{logoError[selectedCompanyId || 0]}</p>
+        </div>
+      )}
+
+      {/* Modal de Logo */}
+      {logoModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+            {/* Header del modal */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Logo de la Empresa</h2>
+                <p className="text-sm text-gray-600 mt-1">{logoModal.companyName}</p>
+              </div>
+              <button
+                onClick={handleLogoModalClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="p-6">
+              {logoModal.loading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <LoadingSpinner size="lg" color="primary" />
+                  <p className="mt-4 text-gray-600">Cargando logo...</p>
+                </div>
+              ) : logoModal.error ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="bg-gray-100 rounded-full p-6 mb-4">
+                    <Image className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900">{logoModal.error}</p>
+                  <p className="text-sm text-gray-600 mt-2">Esta empresa no tiene un logo registrado</p>
+                </div>
+              ) : logoModal.logoUrl ? (
+                <div className="flex flex-col items-center">
+                  <img
+                    src={logoModal.logoUrl}
+                    alt={`Logo de ${logoModal.companyName}`}
+                    className="max-w-full max-h-[500px] object-contain rounded-lg shadow-md"
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            {/* Footer del modal */}
+            <div className="flex justify-end p-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={handleLogoModalClose}
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

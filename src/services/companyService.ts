@@ -160,6 +160,42 @@ class CompanyService {
       throw new Error('Error al subir el logo de la empresa. Verifique su conexión a internet.');
     }
   }
+
+  /**
+   * Obtener logo de la compañía
+   * Solo permite imágenes en formato JPG
+   * @returns Blob de la imagen o null si no existe o no es JPG
+   */
+  async getCompanyLogo(companyId: number): Promise<Blob | null> {
+    try {
+      const response = await apiClient.get(`/companies/${companyId}/logo`, {
+        responseType: 'blob',
+      });
+      
+      // Verificar que el Content-Type sea image/jpeg
+      const contentType = response.headers['content-type'] || response.headers['Content-Type'];
+      
+      if (!contentType || !contentType.includes('image/jpeg')) {
+        // Si no es JPG, retornar null
+        return null;
+      }
+      
+      // Verificar que el blob sea una imagen válida
+      const blob = response.data;
+      if (!blob || blob.size === 0) {
+        return null;
+      }
+      
+      return blob;
+    } catch (error: any) {
+      // Si el error es 404 o similar, retornar null en lugar de lanzar error
+      if (error.response?.status === 404 || error.response?.status === 400) {
+        return null;
+      }
+      // Para otros errores, también retornar null
+      return null;
+    }
+  }
 }
 
 // Exportar instancia única del servicio
