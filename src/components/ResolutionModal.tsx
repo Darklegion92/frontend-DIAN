@@ -30,6 +30,10 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
     type_document_id: 1,
     prefix: '',
     resolution: '1',
+    date_from: '',
+    date_to: '',
+    number_from: 1,
+    number_to: 100,
   });
   
   const [loading, setLoading] = useState(false);
@@ -74,6 +78,10 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
           type_document_id: initialData.typeDocumentId,
           prefix: initialData.prefix || '',
           resolution: initialData.resolution || '1',
+          date_from: initialData.dateFrom || '',
+          date_to: initialData.dateTo || '',
+          number_from: initialData.from || 1,
+          number_to: initialData.to || 100,
         });
       } else {
 
@@ -81,6 +89,10 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
           type_document_id: 1,
           prefix: '',
           resolution: '1',
+          date_from: '',
+          date_to: '',
+          number_from: 1,
+          number_to: 100,
         });
       }
       setError(null);
@@ -98,7 +110,15 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
     if (!formData.type_document_id || formData.type_document_id <= 0) return 'Seleccione un tipo de documento válido';
     if (!formData.prefix.trim()) return 'El prefijo es requerido';
     if (!formData.resolution.trim()) return 'El número de resolución es requerido';  
-    
+
+
+    console.log(formData);
+
+    if (isSupportDocument && (!formData.date_from || !formData.date_to || !formData.number_from || !formData.number_to)) return 'La fecha de inicio, la fecha de fin, el número de inicio y el número de fin son requeridos para documento soporte';
+    if (isSupportDocument && (formData.date_from && formData.date_to && new Date(formData.date_from) >= new Date(formData.date_to))) return 'La fecha de inicio debe ser anterior a la fecha de fin';
+    if (isSupportDocument && (formData.number_from && formData.number_to && formData.number_from >= formData.number_to)) return 'El número de inicio debe ser menor al número de fin';
+    if (isSupportDocument && (formData.number_from && formData.number_to && formData.number_from <= 0)) return 'El número de inicio debe ser mayor a 0';
+    if (isSupportDocument && (formData.number_from && formData.number_to && formData.number_to <= 0)) return 'El número de fin debe ser mayor a 0';
     return null;
   };
 
@@ -142,6 +162,53 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
   if (!isOpen) return null;
 
   const isEditMode = !!initialData;
+
+  const isSupportDocument = formData.type_document_id === 11;
+
+  const renderSupportDocumentFields = () => {
+    return (
+      <>
+        <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de inicio</label>
+        <input
+            type="date"
+            value={formData.date_from}
+            onChange={(e) => handleInputChange('date_from', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+            required
+            />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de fin</label>
+          <input
+            type="date"
+            value={formData.date_to}
+            onChange={(e) => handleInputChange('date_to', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+            required
+            />
+        </div>
+        <div>
+          <Input
+            label="Número de inicio"
+            type="number"
+            value={formData.number_from?.toString() || '1'}
+            onChange={(e) => handleInputChange('number_from', Number(e.target.value))}
+            required
+          />
+        </div>
+        <div>
+          <Input
+            label="Número de fin"
+            type="number"
+            value={formData.number_to?.toString() || '100'}
+            onChange ={(e) => handleInputChange('number_to', Number(e.target.value))}
+            required
+          />
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -229,6 +296,7 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
                     disabled={loading}
                   />
                 </div>
+                {isSupportDocument && renderSupportDocumentFields()}
               </div>
 
               {/* Error */}

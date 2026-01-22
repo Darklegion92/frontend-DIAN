@@ -48,6 +48,10 @@ export interface CreateResolutionData {
   resolution: string;
   bearerToken: string;
   company_id: number;
+  date_from?: string;
+  date_to?: string;
+  number_from?: number;
+  number_to?: number;
 }
 
 export interface ResolutionCreateResponse {
