@@ -111,8 +111,8 @@ const ResolutionModal: React.FC<ResolutionModalProps> = ({
     if (!formData.prefix.trim()) return 'El prefijo es requerido';
     if (!formData.resolution.trim()) return 'El número de resolución es requerido';  
 
-
-    console.log(formData);
+    // Solo validar fechas y rangos de numeración si el tipo de documento es 11 (Documento Soporte)
+    const isSupportDocument = formData.type_document_id === 11;
 
     if (isSupportDocument && (!formData.date_from || !formData.date_to || !formData.number_from || !formData.number_to)) return 'La fecha de inicio, la fecha de fin, el número de inicio y el número de fin son requeridos para documento soporte';
     if (isSupportDocument && (formData.date_from && formData.date_to && new Date(formData.date_from) >= new Date(formData.date_to))) return 'La fecha de inicio debe ser anterior a la fecha de fin';
