@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload, Image, X } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload, Image, X, FlaskConical } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
+import { invoiceService, GenerateTestInvoiceResult } from '../services/invoiceService';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import Input from './Input';
@@ -63,6 +64,23 @@ const CompanyList: React.FC = () => {
   const [logoError, setLogoError] = useState<{ [companyId: number]: string }>({});
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+
+  // Estado del modal de pruebas de facturación
+  const [invoiceTestModal, setInvoiceTestModal] = useState<{
+    isOpen: boolean;
+    testId: string;
+    company: Company | null;
+    loading: boolean;
+    result: GenerateTestInvoiceResult | null;
+    error: string | null;
+  }>({
+    isOpen: false,
+    testId: '',
+    company: null,
+    loading: false,
+    result: null,
+    error: null,
+  });
 
   // Estado del modal de logo
   const [logoModal, setLogoModal] = useState<{
@@ -212,6 +230,16 @@ const CompanyList: React.FC = () => {
         setSoftwareModal({
           isOpen: true,
           company: company
+        });
+        break;
+      case 'pruebas-facturacion':
+        setInvoiceTestModal({
+          isOpen: true,
+          testId: company.identificationNumber || '',
+          company,
+          loading: false,
+          result: null,
+          error: null,
         });
         break;
       default:
@@ -370,6 +398,35 @@ const CompanyList: React.FC = () => {
     }
   };
 
+  // Ejecutar pruebas de facturación
+  const handleInvoiceTestSubmit = async () => {
+    const testId = invoiceTestModal.testId.trim();
+    if (!testId) {
+      setInvoiceTestModal((prev) => ({ ...prev, error: 'Ingrese el Test ID (test id)' }));
+      return;
+    }
+    setInvoiceTestModal((prev) => ({ ...prev, loading: true, error: null, result: null }));
+    try {
+      const result = await invoiceService.generateTestInvoice(testId);
+      setInvoiceTestModal((prev) => ({ ...prev, loading: false, result, error: null }));
+    } catch (err: any) {
+      const message = err?.response?.data?.message ?? err?.message ?? 'Error al ejecutar pruebas de facturación';
+      setInvoiceTestModal((prev) => ({ ...prev, loading: false, error: message, result: null }));
+    }
+  };
+
+  // Cerrar modal de pruebas de facturación
+  const handleInvoiceTestModalClose = () => {
+    setInvoiceTestModal({
+      isOpen: false,
+      testId: '',
+      company: null,
+      loading: false,
+      result: null,
+      error: null,
+    });
+  };
+
   // Cerrar modal de logo
   const handleLogoModalClose = () => {
     // No necesitamos liberar nada porque usamos base64 en lugar de blob URLs
@@ -524,6 +581,15 @@ const CompanyList: React.FC = () => {
                 >
                   <Image className="h-4 w-4 mr-3 text-blue-500" />
                   Ver Logo
+                </button>
+
+                <div className="border-t border-gray-100 my-1" />
+                <button
+                  onClick={() => handleAction('pruebas-facturacion', company)}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                >
+                  <FlaskConical className="h-4 w-4 mr-3 text-amber-500" />
+                  Pruebas Facturación
                 </button>
               </div>
             </div>
@@ -802,6 +868,17 @@ const CompanyList: React.FC = () => {
                             <Image className="h-3 w-3 mr-1" />
                             Ver Logo
                           </Button>
+
+                          <span title="Pruebas Facturación">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAction('pruebas-facturacion', company)}
+                              className="text-xs px-2 py-1 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200"
+                            >
+                              <FlaskConical className="h-3 w-3" />
+                            </Button>
+                          </span>
                         </div>
                       </td>
                     </tr>
@@ -964,6 +1041,136 @@ const CompanyList: React.FC = () => {
               >
                 Cerrar
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pruebas de Facturación */}
+      {invoiceTestModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="h-5 w-5 text-amber-500" />
+                <h2 className="text-lg font-semibold text-gray-900">Pruebas Facturación</h2>
+              </div>
+              <button
+                onClick={handleInvoiceTestModalClose}
+                disabled={invoiceTestModal.loading}
+                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {!invoiceTestModal.result ? (
+                <>
+                  <Input
+                    label="Test ID"
+                    placeholder="Ej: 900123456"
+                    value={invoiceTestModal.testId}
+                    onChange={(e) => setInvoiceTestModal((prev) => ({ ...prev, testId: e.target.value, error: null }))}
+                    disabled={invoiceTestModal.loading}
+                    helperText="Envía 5 facturas y 5 notas crédito de prueba a apidian."
+                  />
+                  {invoiceTestModal.error && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                      <p className="text-sm text-red-800">{invoiceTestModal.error}</p>
+                    </div>
+                  )}
+                  {invoiceTestModal.loading && (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <LoadingSpinner size="lg" color="primary" />
+                      <p className="mt-3 text-sm text-gray-600">Ejecutando pruebas (5 facturas + 5 notas crédito)...</p>
+                      <p className="text-xs text-gray-500 mt-1">Puede tardar unos minutos.</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div
+                    className={`rounded-lg border p-4 ${
+                      invoiceTestModal.result.allAccepted
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-amber-50 border-amber-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          invoiceTestModal.result.allAccepted ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {invoiceTestModal.result.allAccepted ? 'Todos aceptados' : 'Parcial'}
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        {invoiceTestModal.result.acceptedCount} / {invoiceTestModal.result.totalDocuments} documentos
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-800">{invoiceTestModal.result.message}</p>
+                  </div>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p>
+                      Facturas: {invoiceTestModal.result.invoices.filter((d) => d.accepted).length}/5 aceptadas
+                    </p>
+                    <p>
+                      Notas crédito: {invoiceTestModal.result.creditNotes.filter((d) => d.accepted).length}/5 aceptadas
+                    </p>
+                    {(!invoiceTestModal.result.allAccepted && (invoiceTestModal.result.invoices.some((d) => d.error) || invoiceTestModal.result.creditNotes.some((d) => d.error))) && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-amber-700 font-medium">Ver errores</summary>
+                        <ul className="mt-1 list-disc list-inside space-y-0.5 text-red-700">
+                          {invoiceTestModal.result.invoices
+                            .filter((d) => d.error)
+                            .map((d) => (
+                              <li key={d.index}>
+                                Factura {d.number}: {d.error}
+                              </li>
+                            ))}
+                          {invoiceTestModal.result.creditNotes
+                            .filter((d) => d.error)
+                            .map((d) => (
+                              <li key={d.index}>
+                                NC {d.number}: {d.error}
+                              </li>
+                            ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
+              {invoiceTestModal.result ? (
+                <Button variant="outline" size="md" onClick={handleInvoiceTestModalClose}>
+                  Cerrar
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" size="md" onClick={handleInvoiceTestModalClose} disabled={invoiceTestModal.loading}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handleInvoiceTestSubmit}
+                    disabled={invoiceTestModal.loading || !invoiceTestModal.testId.trim()}
+                  >
+                    {invoiceTestModal.loading ? (
+                      <LoadingSpinner size="sm" color="white" />
+                    ) : (
+                      <>
+                        <FlaskConical className="h-4 w-4 mr-2" />
+                        Ejecutar
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
