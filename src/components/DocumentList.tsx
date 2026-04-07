@@ -498,10 +498,10 @@ const DocumentList: React.FC = () => {
                           <User className="h-4 w-4 text-gray-400 mr-2" />
                           <div>
                             <p className="font-medium text-sm sm:text-base text-gray-900">
-                              {document.client.name}
+                              {document.client?.name || 'Cliente no definido'}
                             </p>
                             <p className="text-xs sm:text-sm text-gray-500">
-                              {document.client.identification_number}
+                              {document.client?.identification_number || 'NIT no disponible'}
                             </p>
                           </div>
                         </div>
