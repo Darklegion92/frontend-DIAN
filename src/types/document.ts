@@ -10,7 +10,7 @@ export interface Document {
   cufe: string;
   typeInvoiceId: number | null;
   clientId: string;
-  client: {
+  client?: {
     dv: number;
     name: string;
     email: string;
