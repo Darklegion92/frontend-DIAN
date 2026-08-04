@@ -235,14 +235,14 @@ const DocumentList: React.FC = () => {
         emailData.company_document
       );
 
-      if (response.codigo === 200) {
-        setEmailSuccess(`Documento ${emailData.prefix}${emailData.number} enviado correctamente a ${emailAddress.trim()}`);
+      if (response.success || response.codigo === 200 || response.data?.codigo === 200 || response.data?.codigo === 202) {
+        setEmailSuccess(response.message || response.data?.mensaje || `Documento ${emailData.prefix}${emailData.number} enviado correctamente a ${emailAddress.trim()}`);
         setTimeout(() => {
           setShowEmailModal(false);
           setEmailSuccess(null);
         }, 3000);
       } else {
-        setEmailError(response.mensaje || 'Error al enviar el documento');
+        setEmailError(response.message || response.data?.mensaje || response.mensaje || 'Error al enviar el documento');
       }
     } catch (err: any) {
       setEmailError(err.message || 'Error al enviar el documento por email');
