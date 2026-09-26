@@ -174,7 +174,7 @@ const CompanyList: React.FC = () => {
   // Manejar búsqueda
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loadCompanies({ page: 1, dato: searchTerm });
+    await loadCompanies({ page: 1, dato: searchTerm.trim() });
   };
 
   // Limpiar filtros
@@ -185,7 +185,7 @@ const CompanyList: React.FC = () => {
 
   // Manejar cambio de página
   const handlePageChange = async (newPage: number) => {
-    await loadCompanies({ page: newPage });
+    await loadCompanies({ page: newPage, dato: searchTerm.trim() });
   };
 
   // Manejar acciones de empresa
@@ -637,10 +637,10 @@ const CompanyList: React.FC = () => {
             <Input
               type="text"
               label="Buscar"
-              placeholder="NIT o nombre de la empresa"
+              placeholder="NIT, nombre o comodín (ej: EMPRESA*, *SOLTEC*)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              helperText="Busca por número de documento (NIT) o razón social"
+              helperText="Busca por NIT, razón social o nombre de la empresa (soporta comodín *)."
             />
           </div>
           
