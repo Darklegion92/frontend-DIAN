@@ -306,17 +306,27 @@ const CreateCompany: React.FC = () => {
     setError(null);
 
     try {
-      // Validar que todos los campos estén completos
-      const requiredFields = Object.keys(formData) as (keyof CreateCompanyForm)[];
-      // Eliminar campos que no sean obligatorios
-      requiredFields.splice(requiredFields.indexOf('imap_server'), 1);
-      requiredFields.splice(requiredFields.indexOf('imap_user'), 1);
-      requiredFields.splice(requiredFields.indexOf('imap_password'), 1);
-      requiredFields.splice(requiredFields.indexOf('imap_port'), 1);
-      requiredFields.splice(requiredFields.indexOf('imap_encryption'), 1);
-      // Eliminar campos de token que son opcionales
-      requiredFields.splice(requiredFields.indexOf('tokenPassword'), 1);
-      requiredFields.splice(requiredFields.indexOf('tokenEmpresa'), 1);
+      // Definir campos opcionales que no requieren validación en el cliente
+      const optionalFields: (keyof CreateCompanyForm)[] = [
+        'imap_server',
+        'imap_user',
+        'imap_password',
+        'imap_port',
+        'imap_encryption',
+        'tokenPassword',
+        'tokenEmpresa',
+        'mail_host',
+        'mail_port',
+        'mail_username',
+        'mail_password',
+        'mail_encryption',
+        'mail_from_address',
+        'mail_from_name',
+      ];
+
+      const requiredFields = (Object.keys(formData) as (keyof CreateCompanyForm)[]).filter(
+        field => !optionalFields.includes(field)
+      );
 
       const emptyFields = requiredFields.filter(field => formData[field] === '' || formData[field] === null);
       
@@ -574,63 +584,73 @@ const CreateCompany: React.FC = () => {
 
   const renderMailbox = () => (
     <div>
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Datos de Buzón de Correo</h3>
+      <h3 className="text-lg font-medium text-gray-900 mb-1">Datos de Buzón de Correo</h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Estos campos son opcionales. Si se dejan vacíos, el backend utilizará la configuración de correo por defecto (ZeptoMail).
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
-          label="Servidor de Correo"
+          label="Servidor de Correo (Opcional)"
           value={formData.mail_host || ''}
           onChange={handleInputChange}
-          placeholder="smtp.ejemplo.com"
+          placeholder="smtp.zeptomail.com"
+          helperText="Por defecto: smtp.zeptomail.com"
           disabled={loading}
           {...{name:"mail_host"}}
         />
         <Input
-          label="Puerto SMTP"
+          label="Puerto SMTP (Opcional)"
           type="number"
           value={formData.mail_port !== null ? String(formData.mail_port) : ''}
           onChange={handleInputChange}
           placeholder="587"
+          helperText="Por defecto: 587"
           disabled={loading}
           {...{name:"mail_port"}}
         />
         <Input
-          label="Usuario"
+          label="Usuario (Opcional)"
           value={formData.mail_username || ''}
           onChange={handleInputChange}
-          placeholder="usuario@ejemplo.com"
+          placeholder="emailapikey"
+          helperText="Por defecto: emailapikey"
           disabled={loading}
           {...{name:"mail_username"}}
         />
         <Input
-          label="Contraseña"
+          label="Contraseña (Opcional)"
           type="password"
           value={formData.mail_password || ''}
           onChange={handleInputChange}
-          placeholder="********"
+          placeholder="wSsVR60irxX3Xax6..."
+          helperText="Por defecto: contraseña de ZeptoMail"
           disabled={loading}
           {...{name:"mail_password"}}
         />
         <Input
-          label="Encriptación"
+          label="Encriptación (Opcional)"
           value={formData.mail_encryption || ''}
           onChange={handleInputChange}
           placeholder="tls"
+          helperText="Por defecto: tls"
           disabled={loading}
           {...{name:"mail_encryption"}}
         />
         <Input
-          label="Dirección de Envío"
+          label="Dirección de Envío (Opcional)"
           value={formData.mail_from_address || ''}
           onChange={handleInputChange}
-          placeholder="noreply@ejemplo.com"
+          placeholder="facturador@tecnologiaydesarrollo.net"
+          helperText="Por defecto: facturador@tecnologiaydesarrollo.net"
           disabled={loading}
           {...{name:"mail_from_address"}}
         />
         <Input
-          label="Nombre de Envío"
+          label="Nombre de Envío (Opcional)"
           value={formData.mail_from_name || ''}
           onChange={handleInputChange}
-          placeholder="Empresa Ejemplo S.A.S."
+          placeholder="Facturacion Electronica"
+          helperText="Por defecto: Facturacion Electronica"
           disabled={loading}
           {...{name:"mail_from_name"}}
         />

@@ -37,16 +37,38 @@ const DocumentList: React.FC = () => {
     total: 0
   });
 
+  // Obtener rango de fechas por defecto (última semana)
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+
+    const formatDateStr = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    return {
+      created_at_from: formatDateStr(lastWeek),
+      created_at_to: formatDateStr(today)
+    };
+  };
+
   // Estados de filtros
-  const [filters, setFilters] = useState<DocumentQuery>({
-    created_at_from: '',
-    created_at_to: '',
-    prefix: '',
-    number: '',
-    identification_number: '',
-    type_document_id: undefined,
-    page: 1,
-    per_page: 10
+  const [filters, setFilters] = useState<DocumentQuery>(() => {
+    const initialDates = getDefaultDateRange();
+    return {
+      created_at_from: initialDates.created_at_from,
+      created_at_to: initialDates.created_at_to,
+      prefix: '',
+      number: '',
+      identification_number: '',
+      type_document_id: undefined,
+      page: 1,
+      per_page: 10
+    };
   });
 
   // Cargar tipos de documentos al montar
@@ -86,12 +108,13 @@ const DocumentList: React.FC = () => {
     }
   };
 
-  const loadDocuments = async () => {
+  const loadDocuments = async (customFilters?: DocumentQuery) => {
     try {
       setLoading(true);
       setError(null);
       
-      const result = await documentService.getDocuments(filters);
+      const filtersToUse = customFilters || filters;
+      const result = await documentService.getDocuments(filtersToUse);
       
       setPagination(result);
       setDocuments(result.documents || []);
@@ -118,18 +141,20 @@ const DocumentList: React.FC = () => {
   };
 
   const clearFilters = async () => {
-    setFilters({
-      created_at_from: '',
-      created_at_to: '',
+    const defaultDates = getDefaultDateRange();
+    const resetFilters: DocumentQuery = {
+      created_at_from: defaultDates.created_at_from,
+      created_at_to: defaultDates.created_at_to,
       prefix: '',
       number: '',
-      identification_number: '',
+      identification_number: searchParams.get('company') || '',
       type_document_id: undefined,
       page: 1,
       per_page: 10
-    });
-    // Recargar documentos después de limpiar filtros
-    await loadDocuments();
+    };
+    setFilters(resetFilters);
+    // Recargar documentos con las fechas por defecto de la última semana
+    await loadDocuments(resetFilters);
   };
 
   const handlePageChange = (newPage: number) => {
