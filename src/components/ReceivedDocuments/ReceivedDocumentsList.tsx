@@ -179,10 +179,16 @@ export const ReceivedDocumentsList: React.FC = () => {
       endDate.setDate(endDate.getDate() + 1);
       const formattedEndDate = endDate.toISOString().split('T')[0];
 
-      const response = await api.post('/received-documents/fetch-invoices-email', {
-        start_date: fetchStartDate,
-        end_date: formattedEndDate,
-      });
+      const response = await api.post(
+        '/received-documents/fetch-invoices-email',
+        {
+          start_date: fetchStartDate,
+          end_date: formattedEndDate,
+        },
+        {
+          timeout: 600000, // 10 minutos (600,000 ms) para consulta masiva IMAP
+        }
+      );
 
       if (response.data.data?.length > 0) {
         setFetchEmailsMsg("Se encontraron " + response.data.data?.length + " facturas.");
