@@ -4,6 +4,9 @@ import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building
 import { Document, DocumentQuery, DocumentPaginationMeta } from '../types/document';
 import { TypeDocumentOption, typeDocumentService } from '../services/typeDocumentService';
 import { documentService } from '../services/documentService';
+import { companyService } from '../services/companyService';
+import { Company } from '../types/company';
+import { usePermissions } from '../hooks/usePermissions';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import Input from './Input';
@@ -11,6 +14,8 @@ import Input from './Input';
 const DocumentList: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isDealer } = usePermissions();
+  const [assignedCompanies, setAssignedCompanies] = useState<Company[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,9 +76,13 @@ const DocumentList: React.FC = () => {
     };
   });
 
-  // Cargar tipos de documentos al montar
+  // Cargar tipos de documentos y empresas asignadas si es dealer al montar
   useEffect(() => {
     loadTypeDocuments();
+
+    if (isDealer) {
+      loadAssignedCompanies();
+    }
     
     // Leer query parameters para pre-filtrar
     const companyFilter = searchParams.get('company');
@@ -83,7 +92,16 @@ const DocumentList: React.FC = () => {
         identification_number: companyFilter
       }));
     }
-  }, [searchParams]);
+  }, [searchParams, isDealer]);
+
+  const loadAssignedCompanies = async () => {
+    try {
+      const response = await companyService.getCompanies({ limit: 100 });
+      setAssignedCompanies(response.data || []);
+    } catch (err) {
+      console.error('Error loading assigned companies for dealer:', err);
+    }
+  };
 
   // Cargar documentos inicialmente después de cargar tipos
   useEffect(() => {
@@ -417,14 +435,35 @@ const DocumentList: React.FC = () => {
 
               {/* Identificación de la compañía */}
               <div>
-                <Input
-                  label="Identificación de Compañía"
-                  type="text"
-                  value={filters.identification_number}
-                  onChange={(e) => handleFilterChange('identification_number', e.target.value)}
-                  placeholder="Ej: 12345678"
-                  disabled={loading}
-                />
+                {isDealer ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Empresa Asignada
+                    </label>
+                    <select
+                      value={filters.identification_number || ''}
+                      onChange={(e) => handleFilterChange('identification_number', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary"
+                      disabled={loading}
+                    >
+                      <option value="">Todas mis empresas asignadas</option>
+                      {assignedCompanies.map((c) => (
+                        <option key={c.id} value={c.identificationNumber}>
+                          {c.identificationNumber} - {c.merchantRegistration || c.address || 'Empresa'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <Input
+                    label="Identificación de Compañía"
+                    type="text"
+                    value={filters.identification_number}
+                    onChange={(e) => handleFilterChange('identification_number', e.target.value)}
+                    placeholder="Ej: 12345678"
+                    disabled={loading}
+                  />
+                )}
               </div>
             </div>
             

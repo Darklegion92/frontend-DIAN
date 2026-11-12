@@ -24,6 +24,8 @@ export const usePermissions = () => {
     if (!isAuthenticated || !user?.role) {
       return {
         canAccessCompanies: false,
+        canCreateCompany: false,
+        canEditCompany: false,
         canAccessUsers: false,
         canAccessDocuments: false,
         canAccessProfile: false,
@@ -38,6 +40,8 @@ export const usePermissions = () => {
     return {
       // Permisos específicos por módulo
       canAccessCompanies: PERMISSIONS.companies.includes(userRole),
+      canCreateCompany: userRole === UserRole.ADMIN,
+      canEditCompany: userRole === UserRole.ADMIN,
       canAccessUsers: PERMISSIONS.users.includes(userRole),
       canAccessDocuments: PERMISSIONS.documents.includes(userRole),
       canAccessProfile: PERMISSIONS.profile.includes(userRole),

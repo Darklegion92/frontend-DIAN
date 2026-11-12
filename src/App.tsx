@@ -102,7 +102,7 @@ const AppContent: React.FC = () => {
             path="/companies/create" 
             element={
               <ProtectedRoute>
-                <RoleBasedRoute allowedRoles={[UserRole.ADMIN, UserRole.DEALER]}>
+                <RoleBasedRoute allowedRoles={[UserRole.ADMIN]}>
                   <Layout>
                     <CreateCompany />
                   </Layout>

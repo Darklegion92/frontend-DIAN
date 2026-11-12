@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Building2, Save, ArrowLeft, AlertCircle, Copy, Check } from 'lucide-react';
+import { Building2, Save, ArrowLeft, AlertCircle, Copy, Check, Lock } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
 import LoadingSpinner from './LoadingSpinner';
 import MunicipalitySearchSelector from './MunicipalitySearchSelector';
 import { companyService } from '../services/companyService';
 import { catalogService, CatalogOption } from '../services/catalogService';
+import { usePermissions } from '../hooks/usePermissions';
 import Tabs from './Tabs';
 
 interface CreateCompanyForm {
@@ -152,12 +153,22 @@ const CreateCompany: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEditing = !!id;
+  const { canCreateCompany, canEditCompany } = usePermissions();
+
+  useEffect(() => {
+    // Si no tiene permisos para crear empresa y está intentando crear una
+    if (!isEditing && !canCreateCompany) {
+      navigate('/companies', { replace: true });
+    }
+  }, [isEditing, canCreateCompany, navigate]);
   
   const [activeTab, setActiveTab] = useState('basic');
   const [loading, setLoading] = useState(false);
   const [loadingCatalogs, setLoadingCatalogs] = useState(true);
   const [loadingCompany, setLoadingCompany] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
+  const isReadOnly = isEditing && !canEditCompany;
+  const isFormDisabled = loading || isReadOnly;
   const [formData, setFormData] = useState<CreateCompanyForm>({
     nit: '',
     digito: '',
@@ -377,7 +388,7 @@ const CreateCompany: React.FC = () => {
             placeholder="900123456"
             helperText="Sin dígito de verificación"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "nit", maxLength: 15, pattern: "[0-9]*" }}
           />
         </div>
@@ -389,7 +400,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="7"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "digito", maxLength: 1, pattern: "[0-9]" }}
           />
         </div>
@@ -401,7 +412,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="EMPRESA EJEMPLO S.A.S."
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "business_name", maxLength: 255 }}
           />
         </div>
@@ -410,7 +421,7 @@ const CreateCompany: React.FC = () => {
           <CopyableField
             label="Token Password"
             value={formData.tokenPassword}
-            disabled={loading}
+            disabled={isFormDisabled}
           />
         </div>
 
@@ -418,7 +429,7 @@ const CreateCompany: React.FC = () => {
           <CopyableField
             label="Token Empresa"
             value={formData.tokenEmpresa}
-            disabled={loading}
+            disabled={isFormDisabled}
           />
         </div>
       </div>
@@ -439,7 +450,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
           >
             <option value="">Seleccionar...</option>
             {typeDocumentOptions.map((option) => (
@@ -460,7 +471,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
           >
             <option value="">Seleccionar...</option>
             {typeOrganizationOptions.map((option) => (
@@ -481,7 +492,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
           >
             <option value="">Seleccionar...</option>
             {typeRegimeOptions.map((option) => (
@@ -502,7 +513,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-soltec-primary focus:border-soltec-primary sm:text-sm"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
           >
             <option value="">Seleccionar...</option>
             {typeLiabilityOptions.map((option) => (
@@ -526,7 +537,7 @@ const CreateCompany: React.FC = () => {
             value={formData.municipality_id}
             onChange={handleMunicipalityChange}
             required
-            disabled={loading}
+            disabled={isFormDisabled}
           />
         </div>
 
@@ -537,7 +548,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="12345678"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "merchant_registration", maxLength: 20 }}
           />
         </div>
@@ -549,7 +560,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="Carrera 15 #93-47, Oficina 501"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "address", maxLength: 255 }}
           />
         </div>
@@ -561,7 +572,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="+57 1 123 4567"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "phone", maxLength: 20 }}
           />
         </div>
@@ -574,7 +585,7 @@ const CreateCompany: React.FC = () => {
             onChange={handleInputChange}
             placeholder="contacto@empresa.com"
             required
-            disabled={loading}
+            disabled={isFormDisabled}
             {...{ name: "email", maxLength: 100 }}
           />
         </div>
@@ -595,7 +606,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="smtp.zeptomail.com"
           helperText="Por defecto: smtp.zeptomail.com"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_host"}}
         />
         <Input
@@ -605,7 +616,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="587"
           helperText="Por defecto: 587"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_port"}}
         />
         <Input
@@ -614,7 +625,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="emailapikey"
           helperText="Por defecto: emailapikey"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_username"}}
         />
         <Input
@@ -624,7 +635,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="wSsVR60irxX3Xax6..."
           helperText="Por defecto: contraseña de ZeptoMail"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_password"}}
         />
         <Input
@@ -633,7 +644,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="tls"
           helperText="Por defecto: tls"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_encryption"}}
         />
         <Input
@@ -642,7 +653,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="facturador@tecnologiaydesarrollo.net"
           helperText="Por defecto: facturador@tecnologiaydesarrollo.net"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_from_address"}}
         />
         <Input
@@ -651,7 +662,7 @@ const CreateCompany: React.FC = () => {
           onChange={handleInputChange}
           placeholder="Facturacion Electronica"
           helperText="Por defecto: Facturacion Electronica"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"mail_from_name"}}
         />
       </div>
@@ -667,7 +678,7 @@ const CreateCompany: React.FC = () => {
           value={formData.imap_server || ''}
           onChange={handleInputChange}
           placeholder="mail.ejemplo.com"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"imap_server"}}
         />
         <Input
@@ -675,7 +686,7 @@ const CreateCompany: React.FC = () => {
           value={formData.imap_user || ''}
           onChange={handleInputChange}
           placeholder="usuario@ejemplo.com"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"imap_user"}}
         />
         <Input
@@ -684,7 +695,7 @@ const CreateCompany: React.FC = () => {
           value={formData.imap_password || ''}
           onChange={handleInputChange}
           placeholder="********"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"imap_password"}}
         />
         <Input
@@ -693,7 +704,7 @@ const CreateCompany: React.FC = () => {
           value={formData.imap_port !== null ? String(formData.imap_port) : ''}
           onChange={handleInputChange}
           placeholder="993"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"imap_port"}}
         />
         <Input
@@ -701,7 +712,7 @@ const CreateCompany: React.FC = () => {
           value={formData.imap_encryption || ''}
           onChange={handleInputChange}
           placeholder="ssl/tls"
-          disabled={loading}
+          disabled={isFormDisabled}
           {...{name:"imap_encryption"}}
         />
       </div>
@@ -756,13 +767,25 @@ const CreateCompany: React.FC = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center space-x-2">
             <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-soltec-primary" />
-            <span>{isEditing ? 'Editar Empresa' : 'Crear Nueva Empresa'}</span>
+            <span>{isReadOnly ? 'Ver Empresa (Solo Lectura)' : isEditing ? 'Editar Empresa' : 'Crear Nueva Empresa'}</span>
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
-            {isEditing ? 'Modifica la información de la empresa' : 'Registra una nueva empresa en el sistema DIAN'}
+            {isReadOnly ? 'Consulta la información de la empresa asignada (modo solo lectura)' : isEditing ? 'Modifica la información de la empresa' : 'Registra una nueva empresa en el sistema DIAN'}
           </p>
         </div>
       </div>
+
+      {/* Aviso de Solo Lectura para Distribuidor */}
+      {isReadOnly && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <Lock className="h-5 w-5 text-yellow-600 mr-2" />
+            <p className="text-yellow-800 text-sm sm:text-base font-medium">
+              Modo Distribuidor: Solo puedes consultar la información de esta empresa, no tienes permisos para editarla.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -798,27 +821,29 @@ const CreateCompany: React.FC = () => {
               disabled={loading}
               className="w-full sm:w-auto"
             >
-              Cancelar
+              {isReadOnly ? 'Cerrar' : 'Cancelar'}
             </Button>
             
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-              className="w-full sm:w-auto"
-            >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" color="white" />
-                  <span className="ml-2">Guardando...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isEditing ? 'Actualizar Empresa' : 'Crear Empresa'}
-                </>
-              )}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isFormDisabled}
+                className="w-full sm:w-auto"
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" color="white" />
+                    <span className="ml-2">Guardando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isEditing ? 'Actualizar Empresa' : 'Crear Empresa'}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </form>
       </div>

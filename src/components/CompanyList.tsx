@@ -10,9 +10,11 @@ import Input from './Input';
 import CertificateUploadModal from './CertificateUploadModal';
 import ProductionModal from './ProductionModal';
 import SoftwareModal from './SoftwareModal';
+import { usePermissions } from '../hooks/usePermissions';
 
 const CompanyList: React.FC = () => {
   const navigate = useNavigate();
+  const { canCreateCompany, canEditCompany } = usePermissions();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -497,44 +499,52 @@ const CompanyList: React.FC = () => {
                   className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                 >
                   <Eye className="h-4 w-4 mr-3 text-blue-500" />
-                  Ver Empresa
+                  {canEditCompany ? 'Ver/Editar Empresa' : 'Ver Empresa (Solo Lectura)'}
                 </button>
                 
                 {/* Separador */}
                 <div className="border-t border-gray-100 my-1" />
                 
-                {/* Acciones de certificado */}
-                <button
-                  onClick={() => handleAction('agregar-certificado', company)}
-                  className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
-                    hasCertificate 
-                      ? 'text-gray-700 hover:bg-yellow-50 hover:text-yellow-700' 
-                      : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-                  }`}
-                >
-                  <Shield className={`h-4 w-4 mr-3 ${hasCertificate ? 'text-yellow-500' : 'text-green-500'}`} />
-                  {hasCertificate ? 'Actualizar Certificado' : 'Agregar Certificado'}
-                  {!hasCertificate && (
-                    <span className="ml-auto text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full">
-                      Requerido
-                    </span>
-                  )}
-                </button>
-                
-                {/* Separador */}
-                <div className="border-t border-gray-100 my-1" />
+                {/* Acciones de certificado (solo editable si canEditCompany) */}
+                {canEditCompany && (
+                  <>
+                    <button
+                      onClick={() => handleAction('agregar-certificado', company)}
+                      className={`flex items-center w-full px-4 py-2 text-sm transition-colors ${
+                        hasCertificate 
+                          ? 'text-gray-700 hover:bg-yellow-50 hover:text-yellow-700' 
+                          : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                      }`}
+                    >
+                      <Shield className={`h-4 w-4 mr-3 ${hasCertificate ? 'text-yellow-500' : 'text-green-500'}`} />
+                      {hasCertificate ? 'Actualizar Certificado' : 'Agregar Certificado'}
+                      {!hasCertificate && (
+                        <span className="ml-auto text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full">
+                          Requerido
+                        </span>
+                      )}
+                    </button>
+                    
+                    {/* Separador */}
+                    <div className="border-t border-gray-100 my-1" />
+                  </>
+                )}
                 
                 {/* Acciones de software */}
-                <button
-                  onClick={() => handleAction('crear-software', company)}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                >
-                  <Settings className="h-4 w-4 mr-3 text-blue-500" />
-                  Crear Software
-                </button>
-                
-                {/* Separador */}
-                <div className="border-t border-gray-100 my-1" />
+                {canEditCompany && (
+                  <>
+                    <button
+                      onClick={() => handleAction('crear-software', company)}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                    >
+                      <Settings className="h-4 w-4 mr-3 text-blue-500" />
+                      Crear Software
+                    </button>
+                    
+                    {/* Separador */}
+                    <div className="border-t border-gray-100 my-1" />
+                  </>
+                )}
                 
                 {/* Acciones de documentos */}
                 <button
@@ -553,26 +563,31 @@ const CompanyList: React.FC = () => {
                   Ver Documentos
                 </button>
                 
-                {/* Separador */}
-                <div className="border-t border-gray-100 my-1" />
-                
-                {/* Acción de pasar a producción */}
-                <button
-                  onClick={() => handleAction('pasar-produccion', company)}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
-                >
-                  <ArrowUpCircle className="h-4 w-4 mr-3 text-emerald-500" />
-                  Pasar a Producción
-                </button>
+                {/* Acciones avanzadas solo para admin */}
+                {canEditCompany && (
+                  <>
+                    {/* Separador */}
+                    <div className="border-t border-gray-100 my-1" />
+                    
+                    {/* Acción de pasar a producción */}
+                    <button
+                      onClick={() => handleAction('pasar-produccion', company)}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                    >
+                      <ArrowUpCircle className="h-4 w-4 mr-3 text-emerald-500" />
+                      Pasar a Producción
+                    </button>
 
-                {/* Botón para subir logo */}
-                <button
-                  onClick={() => { closeDropdown(); handleUploadLogoClick(company.id); }}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-                >
-                  <Upload className="h-4 w-4 mr-3 text-indigo-500" />
-                  Subir Logo
-                </button>
+                    {/* Botón para subir logo */}
+                    <button
+                      onClick={() => { closeDropdown(); handleUploadLogoClick(company.id); }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                    >
+                      <Upload className="h-4 w-4 mr-3 text-indigo-500" />
+                      Subir Logo
+                    </button>
+                  </>
+                )}
 
                 {/* Botón para ver logo */}
                 <button
@@ -624,10 +639,12 @@ const CompanyList: React.FC = () => {
             Administra y consulta la información de las empresas registradas (10 por página)
           </p>
         </div>
-        <Button variant="primary" size="md" className="w-full sm:w-auto" onClick={() => navigate('/companies/create')}>
-          <Plus className="h-5 w-5 mr-2" />
-          Nueva Empresa
-        </Button>
+        {canCreateCompany && (
+          <Button variant="primary" size="md" className="w-full sm:w-auto" onClick={() => navigate('/companies/create')}>
+            <Plus className="h-5 w-5 mr-2" />
+            Nueva Empresa
+          </Button>
+        )}
       </div>
 
       {/* Barra de búsqueda */}
