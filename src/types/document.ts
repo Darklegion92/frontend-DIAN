@@ -91,6 +91,7 @@ export interface DocumentQuery {
   number?: string;
   identification_number?: string;
   type_document_id?: number;
+  state_document_id?: number;
   page?: number;
   per_page?: number;
 } 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check, Mail, Download } from 'lucide-react';
+import { FileText, Search, Calendar, Hash, User, DollarSign, Filter, X, Building2, Copy, Check, Mail, Download, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Document, DocumentQuery, DocumentPaginationMeta } from '../types/document';
 import { TypeDocumentOption, typeDocumentService } from '../services/typeDocumentService';
 import { documentService } from '../services/documentService';
@@ -14,7 +14,8 @@ import Input from './Input';
 const DocumentList: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isDealer } = usePermissions();
+  const { isDealer, isAdmin } = usePermissions();
+  const canFilterErrors = isAdmin || isDealer;
   const [assignedCompanies, setAssignedCompanies] = useState<Company[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,14 @@ const DocumentList: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [copiedCufe, setCopiedCufe] = useState<string | null>(null);
   
+  // Estado para modal de visualización de errores DIAN
+  const [selectedErrors, setSelectedErrors] = useState<{
+    documentNumber: string;
+    errors: string[];
+    raw?: any;
+  } | null>(null);
+  const [copiedErrorIndex, setCopiedErrorIndex] = useState<number | null>(null);
+
   // Estados para el modal de email
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailLoading, setEmailLoading] = useState(false);
@@ -71,6 +80,7 @@ const DocumentList: React.FC = () => {
       number: '',
       identification_number: '',
       type_document_id: undefined,
+      state_document_id: 1, // Por defecto autorizados (1)
       page: 1,
       per_page: 10
     };
@@ -167,6 +177,7 @@ const DocumentList: React.FC = () => {
       number: '',
       identification_number: searchParams.get('company') || '',
       type_document_id: undefined,
+      state_document_id: 1,
       page: 1,
       per_page: 10
     };
@@ -210,6 +221,106 @@ const DocumentList: React.FC = () => {
     
     const fallbackLabel = commonTypes[typeId] || `Tipo ${typeId}`;
     return fallbackLabel;
+  };
+
+  // Función para extraer los mensajes de error de response_dian
+  const extractDianErrors = (responseDian: any): string[] => {
+    if (!responseDian) return [];
+
+    let parsed = responseDian;
+    if (typeof responseDian === 'string') {
+      try {
+        parsed = JSON.parse(responseDian);
+      } catch (e) {
+        // Si no es un JSON válido, retornar el string si parece un mensaje
+        const trimmed = responseDian.trim();
+        return trimmed ? [trimmed] : [];
+      }
+    }
+
+    // Si aún después del parse es string (p.ej. doble stringificado)
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch (e) {
+        return [parsed];
+      }
+    }
+
+    // Buscar ErrorMessage dentro de la estructura Envelope / Body / SendBillSyncResponse / SendBillSyncResult
+    const errorMessage =
+      parsed?.Envelope?.Body?.SendBillSyncResponse?.SendBillSyncResult?.ErrorMessage ||
+      parsed?.ResponseDian?.Envelope?.Body?.SendBillSyncResponse?.SendBillSyncResult?.ErrorMessage ||
+      parsed?.SendBillSyncResponse?.SendBillSyncResult?.ErrorMessage ||
+      parsed?.SendBillSyncResult?.ErrorMessage ||
+      parsed?.ErrorMessage;
+
+    const errors: string[] = [];
+
+    if (errorMessage) {
+      if (Array.isArray(errorMessage.strings) && errorMessage.strings.length > 0) {
+        errors.push(...errorMessage.strings.map((s: any) => String(s)));
+      } else if (Array.isArray(errorMessage.string) && errorMessage.string.length > 0) {
+        errors.push(...errorMessage.string.map((s: any) => String(s)));
+      } else if (typeof errorMessage.string === 'string' && errorMessage.string.trim()) {
+        errors.push(errorMessage.string.trim());
+      } else if (typeof errorMessage === 'string' && errorMessage.trim()) {
+        errors.push(errorMessage.trim());
+      } else if (Array.isArray(errorMessage) && errorMessage.length > 0) {
+        errors.push(...errorMessage.map((s: any) => String(s)));
+      }
+    }
+
+    // Fallbacks si no vino en ErrorMessage pero hay statusDescription o message
+    if (errors.length === 0) {
+      const statusDescription =
+        parsed?.Envelope?.Body?.SendBillSyncResponse?.SendBillSyncResult?.StatusDescription ||
+        parsed?.StatusDescription;
+      const statusMessage =
+        parsed?.Envelope?.Body?.SendBillSyncResponse?.SendBillSyncResult?.StatusMessage ||
+        parsed?.StatusMessage ||
+        parsed?.message;
+
+      if (statusDescription && typeof statusDescription === 'string' && statusDescription.trim()) {
+        errors.push(statusDescription.trim());
+      }
+      if (statusMessage && typeof statusMessage === 'string' && statusMessage.trim() && !errors.includes(statusMessage.trim())) {
+        errors.push(statusMessage.trim());
+      }
+    }
+
+    return errors;
+  };
+
+  const handleOpenErrorsModal = (document: Document) => {
+    const errors = extractDianErrors(document.responseDian);
+    setSelectedErrors({
+      documentNumber: `${document.prefix || ''}${document.number || ''}`,
+      errors: errors.length > 0 ? errors : ['No se encontraron detalles específicos de error en la respuesta de la DIAN.'],
+      raw: document.responseDian,
+    });
+    setCopiedErrorIndex(null);
+  };
+
+  const handleCopySingleError = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedErrorIndex(index);
+      setTimeout(() => setCopiedErrorIndex(null), 2000);
+    } catch (err) {
+      console.error('Error al copiar error:', err);
+    }
+  };
+
+  const handleCopyAllErrors = async () => {
+    if (!selectedErrors) return;
+    try {
+      await navigator.clipboard.writeText(selectedErrors.errors.join('\n\n'));
+      setCopiedErrorIndex(-1); // -1 para indicar todos
+      setTimeout(() => setCopiedErrorIndex(null), 2000);
+    } catch (err) {
+      console.error('Error al copiar todos los errores:', err);
+    }
   };
 
   // Función para copiar CUFE al portapapeles
@@ -465,6 +576,34 @@ const DocumentList: React.FC = () => {
                   />
                 )}
               </div>
+
+              {/* Switch Traer errores (Solo Admin o Distribuidores) */}
+              {canFilterErrors && (
+                <div className="flex items-center space-x-3 pt-2 sm:pt-6">
+                  <label className="relative inline-flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={filters.state_document_id === 0}
+                      onChange={(e) => {
+                        const isErrorOnly = e.target.checked;
+                        handleFilterChange('state_document_id', isErrorOnly ? 0 : 1);
+                      }}
+                      className="sr-only peer"
+                      disabled={loading}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
+                      <AlertTriangle className={`h-4 w-4 mr-1.5 ${filters.state_document_id === 0 ? 'text-red-600' : 'text-gray-400'}`} />
+                      Traer errores
+                    </span>
+                  </label>
+                  {filters.state_document_id === 0 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                      Filtrando errores (state_document_id = 0)
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4 pt-4">
@@ -593,6 +732,16 @@ const DocumentList: React.FC = () => {
                       </td>
                       <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center space-x-2">
+                          {document.stateDocumentId === 0 && (
+                            <button
+                              onClick={() => handleOpenErrorsModal(document)}
+                              className="flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 transition-colors"
+                              title="Ver errores de la DIAN"
+                            >
+                              <AlertCircle className="h-3.5 w-3.5 mr-1 text-red-600" />
+                              Ver Errores
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCopyCufe(document.cufe)}
                             className="flex-shrink-0 p-1 rounded hover:bg-gray-100 transition-colors"
@@ -772,6 +921,93 @@ const DocumentList: React.FC = () => {
                   </div>
                 </form>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de visualización de errores DIAN */}
+      {selectedErrors && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50 p-4">
+          <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-lg shadow-xl flex flex-col">
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-gray-200">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                    Errores DIAN - Documento {selectedErrors.documentNumber}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Detalle de los mensajes de rechazo o inconsistencia devueltos por la DIAN
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                onClick={() => setSelectedErrors(null)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  {selectedErrors.errors.length} {selectedErrors.errors.length === 1 ? 'Error registrado' : 'Errores registrados'}
+                </span>
+                <button
+                  onClick={handleCopyAllErrors}
+                  className="inline-flex items-center text-xs font-medium text-soltec-primary hover:text-opacity-80 transition-colors"
+                >
+                  {copiedErrorIndex === -1 ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 mr-1 text-green-600" />
+                      ¡Copiados todos!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                      Copiar todos los errores
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {selectedErrors.errors.map((errText, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 bg-red-50 border border-red-200 rounded-md flex items-start justify-between space-x-3 hover:bg-red-100/60 transition-colors"
+                  >
+                    <div className="flex items-start space-x-2 text-sm text-red-900 flex-1">
+                      <span className="font-bold text-red-700 min-w-[20px]">{idx + 1}.</span>
+                      <p className="break-words leading-relaxed whitespace-pre-wrap">{errText}</p>
+                    </div>
+                    <button
+                      onClick={() => handleCopySingleError(errText, idx)}
+                      className="p-1 rounded text-red-600 hover:bg-red-200 transition-colors flex-shrink-0"
+                      title="Copiar mensaje"
+                    >
+                      {copiedErrorIndex === idx ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end p-4 border-t border-gray-200">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setSelectedErrors(null)}
+              >
+                Cerrar
+              </Button>
             </div>
           </div>
         </div>
