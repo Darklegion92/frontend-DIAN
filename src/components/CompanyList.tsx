@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload, Image, X, FlaskConical } from 'lucide-react';
+import { Building2, Search, Plus, Eye, Calendar, MapPin, Phone, Mail, MoreVertical, FileText, Shield, FolderOpen, ChevronDown, ArrowUpCircle, Settings, Upload, Image, X, FlaskConical, Users, CheckCircle2 } from 'lucide-react';
 import { Company, PaginatedResponse, PaginationQuery } from '../types/company';
 import { companyService } from '../services/companyService';
 import { invoiceService, GenerateTestInvoiceResult } from '../services/invoiceService';
+import { payrollService, GenerateTestPayrollResult } from '../services/payrollService';
 import LoadingSpinner from './LoadingSpinner';
 import Button from './Button';
 import Input from './Input';
@@ -74,6 +75,23 @@ const CompanyList: React.FC = () => {
     company: Company | null;
     loading: boolean;
     result: GenerateTestInvoiceResult | null;
+    error: string | null;
+  }>({
+    isOpen: false,
+    testId: '',
+    company: null,
+    loading: false,
+    result: null,
+    error: null,
+  });
+
+  // Estado del modal de habilitación / pruebas de nómina electrónica
+  const [payrollTestModal, setPayrollTestModal] = useState<{
+    isOpen: boolean;
+    testId: string;
+    company: Company | null;
+    loading: boolean;
+    result: GenerateTestPayrollResult | null;
     error: string | null;
   }>({
     isOpen: false,
@@ -238,6 +256,16 @@ const CompanyList: React.FC = () => {
         setInvoiceTestModal({
           isOpen: true,
           testId: company.identificationNumber || '',
+          company,
+          loading: false,
+          result: null,
+          error: null,
+        });
+        break;
+      case 'pruebas-nomina':
+        setPayrollTestModal({
+          isOpen: true,
+          testId: '',
           company,
           loading: false,
           result: null,
@@ -429,6 +457,78 @@ const CompanyList: React.FC = () => {
     });
   };
 
+  // Ejecutar habilitación de nómina electrónica (4 nóminas + 4 ajustes de eliminación)
+  const handlePayrollTestSubmit = async () => {
+    const testId = payrollTestModal.testId.trim();
+    const nit = payrollTestModal.company?.identificationNumber?.trim() || '';
+
+    if (!testId) {
+      setPayrollTestModal((prev) => ({
+        ...prev,
+        error: 'Ingrese el TestSetId de nómina proporcionado por la DIAN',
+      }));
+      return;
+    }
+
+    if (!nit) {
+      setPayrollTestModal((prev) => ({
+        ...prev,
+        error: 'No se encontró el NIT de la empresa seleccionada',
+      }));
+      return;
+    }
+
+    setPayrollTestModal((prev) => ({
+      ...prev,
+      loading: true,
+      error: null,
+      result: null,
+    }));
+
+    try {
+      const result = await payrollService.generateTestPayroll(nit, testId);
+      setPayrollTestModal((prev) => ({
+        ...prev,
+        loading: false,
+        result,
+        error: null,
+      }));
+
+      // Si pasó automáticamente a producción, actualizar el estado local de la empresa
+      if (result.switchedToProduction && payrollTestModal.company) {
+        const companyId = payrollTestModal.company.id;
+        setCompanies((prevCompanies) =>
+          prevCompanies.map((c) =>
+            c.id === companyId ? { ...c, payrollTypeEnvironmentId: 1 } : c,
+          ),
+        );
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ??
+        err?.message ??
+        'Error al ejecutar la habilitación de nómina electrónica';
+      setPayrollTestModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: Array.isArray(message) ? message.join(', ') : message,
+        result: null,
+      }));
+    }
+  };
+
+  // Cerrar modal de habilitación de nómina electrónica
+  const handlePayrollTestModalClose = () => {
+    setPayrollTestModal({
+      isOpen: false,
+      testId: '',
+      company: null,
+      loading: false,
+      result: null,
+      error: null,
+    });
+  };
+
   // Cerrar modal de logo
   const handleLogoModalClose = () => {
     // No necesitamos liberar nada porque usamos base64 en lugar de blob URLs
@@ -605,6 +705,13 @@ const CompanyList: React.FC = () => {
                 >
                   <FlaskConical className="h-4 w-4 mr-3 text-amber-500" />
                   Pruebas Facturación
+                </button>
+                <button
+                  onClick={() => handleAction('pruebas-nomina', company)}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
+                >
+                  <Users className="h-4 w-4 mr-3 text-teal-600" />
+                  Habilitar Nómina
                 </button>
               </div>
             </div>
@@ -896,6 +1003,18 @@ const CompanyList: React.FC = () => {
                               <FlaskConical className="h-3 w-3" />
                             </Button>
                           </span>
+
+                          <span title="Habilitar Nómina Electrónica (4 Nóminas + 4 Ajustes)">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAction('pruebas-nomina', company)}
+                              className="text-xs px-2 py-1 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200"
+                            >
+                              <Users className="h-3 w-3 mr-1" />
+                              Hab. Nómina
+                            </Button>
+                          </span>
                         </div>
                       </td>
                     </tr>
@@ -1183,6 +1302,201 @@ const CompanyList: React.FC = () => {
                       <>
                         <FlaskConical className="h-4 w-4 mr-2" />
                         Ejecutar
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Habilitación / Pruebas de Nómina Electrónica */}
+      {payrollTestModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-teal-600" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Habilitación Nómina Electrónica
+                  </h2>
+                  {payrollTestModal.company && (
+                    <p className="text-xs text-gray-500">
+                      {payrollTestModal.company.usuarioDian} ({payrollTestModal.company.identificationNumber}-{payrollTestModal.company.dv})
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handlePayrollTestModalClose}
+                disabled={payrollTestModal.loading}
+                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {!payrollTestModal.result ? (
+                <>
+                  <div className="rounded-lg bg-teal-50 border border-teal-200 p-3 text-xs text-teal-900 space-y-1">
+                    <p className="font-semibold">Proceso automático de habilitación DIAN:</p>
+                    <p>
+                      1. Envía <strong>4 Nóminas Individuales</strong> bien liquidadas y valida su aceptación.
+                    </p>
+                    <p>
+                      2. Envía <strong>4 Notas de Ajuste (Eliminación)</strong> asociadas a las nóminas generadas.
+                    </p>
+                    <p>
+                      3. Si los <strong>8 documentos</strong> son aceptados, pasa automáticamente Nómina Electrónica a <strong>Producción</strong>.
+                    </p>
+                  </div>
+
+                  <Input
+                    label="TestSetId de Nómina (DIAN)"
+                    placeholder="Ej: 85d66719-3d34-4a53-9dca-e1a38a2a63fd"
+                    value={payrollTestModal.testId}
+                    onChange={(e) =>
+                      setPayrollTestModal((prev) => ({
+                        ...prev,
+                        testId: e.target.value,
+                        error: null,
+                      }))
+                    }
+                    disabled={payrollTestModal.loading}
+                    helperText="Ingrese el identificador del set de pruebas (TestSetId) entregado por la DIAN para el software de nómina."
+                  />
+
+                  {payrollTestModal.error && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                      <p className="text-sm text-red-800">{payrollTestModal.error}</p>
+                    </div>
+                  )}
+
+                  {payrollTestModal.loading && (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <LoadingSpinner size="lg" color="primary" />
+                      <p className="mt-3 text-sm font-medium text-gray-700">
+                        Ejecutando habilitación (4 nóminas + 4 ajustes)...
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 text-center">
+                        Validando documentos ante la DIAN y actualizando ambiente. Esto puede tardar entre 1 y 3 minutos.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div
+                    className={`rounded-lg border p-4 ${
+                      payrollTestModal.result.allAccepted
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-amber-50 border-amber-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          payrollTestModal.result.allAccepted
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {payrollTestModal.result.allAccepted ? 'Habilitado (8/8)' : 'Parcial'}
+                      </span>
+                      <span className="text-sm text-gray-600">
+                        {payrollTestModal.result.acceptedCount} / {payrollTestModal.result.totalDocuments} documentos aceptados
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-800">{payrollTestModal.result.message}</p>
+                  </div>
+
+                  {payrollTestModal.result.switchedToProduction && (
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                      <p className="text-xs font-medium text-emerald-900">
+                        Ambiente de Nómina Electrónica actualizado automáticamente a Producción.
+                      </p>
+                    </div>
+                  )}
+
+                  {payrollTestModal.result.productionError && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                      <p className="text-xs text-red-800">
+                        <strong>Aviso Producción:</strong> {payrollTestModal.result.productionError}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-700 space-y-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p>
+                      <strong>Nóminas Individuales:</strong>{' '}
+                      {payrollTestModal.result.payrolls.filter((d) => d.accepted).length} / 4 aceptadas
+                    </p>
+                    <p>
+                      <strong>Notas de Ajuste (Eliminación):</strong>{' '}
+                      {payrollTestModal.result.adjustNotes.filter((d) => d.accepted).length} / 4 aceptadas
+                    </p>
+
+                    {(payrollTestModal.result.payrolls.some((d) => d.error) ||
+                      payrollTestModal.result.adjustNotes.some((d) => d.error)) && (
+                      <details className="mt-2 pt-2 border-t border-gray-200" open={!payrollTestModal.result.allAccepted}>
+                        <summary className="cursor-pointer text-amber-700 font-medium">
+                          Ver errores reportados
+                        </summary>
+                        <ul className="mt-2 list-disc list-inside space-y-1 text-red-700 break-words">
+                          {payrollTestModal.result.payrolls
+                            .filter((d) => d.error)
+                            .map((d) => (
+                              <li key={`ni-${d.index}`}>
+                                <strong>Nómina {d.number}:</strong> {d.error}
+                              </li>
+                            ))}
+                          {payrollTestModal.result.adjustNotes
+                            .filter((d) => d.error)
+                            .map((d) => (
+                              <li key={`na-${d.index}`}>
+                                <strong>Ajuste {d.number}:</strong> {d.error}
+                              </li>
+                            ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
+              {payrollTestModal.result ? (
+                <Button variant="outline" size="md" onClick={handlePayrollTestModalClose}>
+                  Cerrar
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={handlePayrollTestModalClose}
+                    disabled={payrollTestModal.loading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handlePayrollTestSubmit}
+                    disabled={payrollTestModal.loading || !payrollTestModal.testId.trim()}
+                  >
+                    {payrollTestModal.loading ? (
+                      <LoadingSpinner size="sm" color="white" />
+                    ) : (
+                      <>
+                        <Users className="h-4 w-4 mr-2" />
+                        Ejecutar Habilitación
                       </>
                     )}
                   </Button>
